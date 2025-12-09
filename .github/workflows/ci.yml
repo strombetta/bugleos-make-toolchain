@@ -1,0 +1,32 @@
+##
+# Copyright (c) 2025 Sebastiano Trombetta
+# SPDX-License-Identifier: MIT
+# Licensed under the MIT License. See LICENSE file for details.
+##
+
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint-and-sanity:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install tooling
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+
+      - name: Lint shell scripts
+        run: |
+          shellcheck scripts/*.sh
+          bash -n scripts/*.sh
+
+      - name: Validate Make invocation and metadata generation
+        run: |
+          make -f make/common.mk ensure-dirs
+          make -C . -f Makefile -n clean
+          ./scripts/gen-metadata.sh
