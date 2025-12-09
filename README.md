@@ -35,7 +35,7 @@ make i686
 make aarch64
 ```
 
-The umbrella target `toolchain` builds the current `TARGET` from `config/paths.mk` or an override passed on the command line:
+The umbrella target `toolchain` builds the current `TARGET` from `config/paths.mk` or an override passed on the command line. By default, `TARGET` matches the host architecture when it is supported:
 
 ```
 make TARGET=aarch64-bugleos-linux-musl toolchain
