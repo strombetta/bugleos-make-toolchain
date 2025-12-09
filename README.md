@@ -15,11 +15,12 @@ BugleOS Toolchain builds deterministic cross-compilers and system headers for Bu
 
 - Standard POSIX build utilities (bash, tar, make)
 - wget or curl for fetching sources
+- gpg for signature verification
 - A C/C++ build environment (C compiler, g++, binutils)
 
 ## Usage
 
-Fetch sources and verify checksums (optional):
+Fetch sources along with signatures and verify both checksums and PGP signatures (recommended before building):
 
 ```
 scripts/fetch-sources.sh
