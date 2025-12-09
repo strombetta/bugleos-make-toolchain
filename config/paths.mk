@@ -11,7 +11,16 @@ BUILDS_DIR ?= $(ROOT_DIR)/builds
 OUT_DIR ?= $(ROOT_DIR)/out
 LOGS_DIR ?= $(ROOT_DIR)/logs
 
-TARGET ?= x86_64-bugleos-linux-musl
+HOST_ARCH := $(shell uname -m)
+HOST_TARGET := $(strip $(shell \
+  case "$(HOST_ARCH)" in \
+    x86_64|amd64) echo x86_64-bugleos-linux-musl ;; \
+    i686|i386) echo i686-bugleos-linux-musl ;; \
+    aarch64|arm64) echo aarch64-bugleos-linux-musl ;; \
+    *) echo ;; \
+  esac))
+
+TARGET ?= $(if $(HOST_TARGET),$(HOST_TARGET),$(error Unsupported host architecture '$(HOST_ARCH)'; please set TARGET explicitly))
 
 TOOLCHAIN_DIR ?= $(OUT_DIR)/toolchain/$(TARGET)
 SYSROOT ?= $(OUT_DIR)/sysroot/$(TARGET)
