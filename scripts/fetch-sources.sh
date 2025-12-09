@@ -50,7 +50,7 @@ MUSL_URL=$(url_of MUSL_URL)
 
 expand_make_vars() {
   # Translate make-style $(VAR) placeholders into shell-style ${VAR} for safe expansion.
-  sed 's/\$(([^)]*))/${\1}/g'
+  sed -E 's/\$\(([^)]*)\)/${\1}/g'
 }
 
 expand_url() {
