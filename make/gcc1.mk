@@ -22,19 +22,21 @@ $(GCC1_BUILD_DIR)/.built-stage1: $(GCC_STAGE1_ARCHIVE)
 		--target=$(TARGET) \
 		--prefix=$(TOOLCHAIN_DIR) \
 		--with-sysroot=$(SYSROOT) \
-		--enable-languages=c \
+		--with-newlib \
+		--with-native-system-header-dir=/usr/include \
 		--without-headers \
 		--disable-nls \
 		--disable-shared \
 		--disable-threads \
+		--disable-libmudflap \
+		--disable-decimal-float \
 		--disable-libatomic \
 		--disable-libgomp \
-		--disable-libmudflap \
-		--disable-libssp \
-		--disable-multilib \
-		--disable-decimal-float \
 		--disable-libquadmath \
-		--with-newlib \
+		--disable-libssp \
+		--disable-libvtv \
+		--disable-multilib \
+		--enable-languages=c \
 		--enable-checking=release \
 		> $(LOGS_DIR)/gcc1-configure.log 2>&1
 	@$(MAKE) -C $(GCC1_BUILD_DIR) -j$(JOBS) all-gcc > $(LOGS_DIR)/gcc1-build.log 2>&1
