@@ -48,7 +48,19 @@ GCC_STAGE1_URL=$(url_of GCC_STAGE1_URL)
 GCC_URL=$(url_of GCC_URL)
 MUSL_URL=$(url_of MUSL_URL)
 
-fetch "binutils-${BINUTILS_VERSION}.tar.xz" "$BINUTILS_URL"
-fetch "gcc-${GCC_STAGE1_VERSION}.tar.xz" "$GCC_STAGE1_URL"
-fetch "gcc-${GCC_VERSION}.tar.xz" "$GCC_URL"
-fetch "musl-${MUSL_VERSION}.tar.gz" "$MUSL_URL"
+expand_make_vars() {
+  # Translate make-style $(VAR) placeholders into shell-style ${VAR} for safe expansion.
+  sed 's/\$(([^)]*))/${\1}/g'
+}
+
+expand_url() {
+  local template="$1"
+  local shell_template
+  shell_template=$(printf '%s' "$template" | expand_make_vars)
+  eval "echo \"$shell_template\""
+}
+
+fetch "binutils-${BINUTILS_VERSION}.tar.xz" "$(expand_url "$BINUTILS_URL")"
+fetch "gcc-${GCC_STAGE1_VERSION}.tar.xz" "$(expand_url "$GCC_STAGE1_URL")"
+fetch "gcc-${GCC_VERSION}.tar.xz" "$(expand_url "$GCC_URL")"
+fetch "musl-${MUSL_VERSION}.tar.gz" "$(expand_url "$MUSL_URL")"

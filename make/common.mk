@@ -9,6 +9,9 @@ ROOT_DIR ?= $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/..)
 include $(ROOT_DIR)/config/paths.mk
 include $(ROOT_DIR)/config/versions.mk
 
+# Ensure the previously built toolchain binaries are discoverable for subsequent stages.
+export PATH := $(TOOLCHAIN_DIR)/bin:$(PATH)
+
 HOST ?= $(shell uname -m)-unknown-linux-gnu
 PKGDIR ?= $(ROOT_DIR)/patches
 
