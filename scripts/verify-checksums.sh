@@ -39,6 +39,68 @@ ensure_checksum_set "GCC (stage1)" "$GCC_STAGE1_SHA"
 ensure_checksum_set "GCC" "$GCC_SHA"
 ensure_checksum_set "musl" "$MUSL_SHA"
 
+SIG_BINUTILS="binutils-${BINUTILS_VERSION}.tar.xz.sig"
+SIG_GCC_STAGE1="gcc-${GCC_STAGE1_VERSION}.tar.xz.sig"
+SIG_GCC="gcc-${GCC_VERSION}.tar.xz.sig"
+SIG_MUSL="musl-${MUSL_VERSION}.tar.gz.asc"
+
+GNU_KEYRING="$DOWNLOADS_DIR/gnu-keyring.gpg"
+MUSL_PUBKEY="$DOWNLOADS_DIR/musl.pub"
+
+ensure_file_present() {
+  local path="$1"
+  local description="$2"
+  if [[ ! -f "$path" ]]; then
+    cat >&2 <<EOF
+Missing $description at $path
+Please run scripts/fetch-sources.sh to download the source archives, their signatures, and the required keyrings.
+EOF
+    exit 1
+  fi
+}
+
+for signature in \
+  "$DOWNLOADS_DIR/$SIG_BINUTILS" \
+  "$DOWNLOADS_DIR/$SIG_GCC_STAGE1" \
+  "$DOWNLOADS_DIR/$SIG_GCC" \
+  "$DOWNLOADS_DIR/$SIG_MUSL"; do
+  ensure_file_present "$signature" "signature file"
+done
+
+ensure_file_present "$GNU_KEYRING" "GNU project keyring"
+ensure_file_present "$MUSL_PUBKEY" "musl public key"
+
+for archive in \
+  "$DOWNLOADS_DIR/binutils-${BINUTILS_VERSION}.tar.xz" \
+  "$DOWNLOADS_DIR/gcc-${GCC_STAGE1_VERSION}.tar.xz" \
+  "$DOWNLOADS_DIR/gcc-${GCC_VERSION}.tar.xz" \
+  "$DOWNLOADS_DIR/musl-${MUSL_VERSION}.tar.gz"; do
+  ensure_file_present "$archive" "source archive"
+done
+
+GNUPGHOME_TMP=$(mktemp -d)
+cleanup() {
+  rm -rf "$GNUPGHOME_TMP"
+}
+trap cleanup EXIT
+
+gpg_common_args=(--homedir "$GNUPGHOME_TMP" --batch --no-tty)
+
+gpg "${gpg_common_args[@]}" --import "$GNU_KEYRING" >/dev/null
+gpg "${gpg_common_args[@]}" --import "$MUSL_PUBKEY" >/dev/null
+
+verify_signature() {
+  local sig_file="$1" target_file="$2"
+  gpg "${gpg_common_args[@]}" --verify "$DOWNLOADS_DIR/$sig_file" "$DOWNLOADS_DIR/$target_file"
+}
+
+echo "Verifying PGP signatures..."
+verify_signature "$SIG_BINUTILS" "binutils-${BINUTILS_VERSION}.tar.xz"
+verify_signature "$SIG_GCC_STAGE1" "gcc-${GCC_STAGE1_VERSION}.tar.xz"
+verify_signature "$SIG_GCC" "gcc-${GCC_VERSION}.tar.xz"
+verify_signature "$SIG_MUSL" "musl-${MUSL_VERSION}.tar.gz"
+echo "All signatures verified."
+
 cat > "$DOWNLOADS_DIR/.checksums" <<EOF_SUMS
 $BINUTILS_SHA  binutils-${BINUTILS_VERSION}.tar.xz
 $GCC_STAGE1_SHA  gcc-${GCC_STAGE1_VERSION}.tar.xz

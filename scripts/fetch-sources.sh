@@ -19,6 +19,18 @@ url_of() {
   awk -F':=' -v name="$var" '$1 ~ "^"name"" {sub(/^ /,"",$2); print $2}' "$ROOT_DIR/config/versions.mk"
 }
 
+expand_make_vars() {
+  # Translate make-style $(VAR) placeholders into shell-style ${VAR} for safe expansion.
+  sed -E 's/\$\(([^)]*)\)/${\1}/g'
+}
+
+expand_url() {
+  local template="$1"
+  local shell_template
+  shell_template=$(printf '%s' "$template" | expand_make_vars)
+  eval "echo \"$shell_template\""
+}
+
 fetch() {
   local name="$1" url="$2"
   local dest="$DOWNLOADS_DIR/$name"
@@ -47,20 +59,24 @@ BINUTILS_URL=$(url_of BINUTILS_URL)
 GCC_STAGE1_URL=$(url_of GCC_STAGE1_URL)
 GCC_URL=$(url_of GCC_URL)
 MUSL_URL=$(url_of MUSL_URL)
-
-expand_make_vars() {
-  # Translate make-style $(VAR) placeholders into shell-style ${VAR} for safe expansion.
-  sed -E 's/\$\(([^)]*)\)/${\1}/g'
-}
-
-expand_url() {
-  local template="$1"
-  local shell_template
-  shell_template=$(printf '%s' "$template" | expand_make_vars)
-  eval "echo \"$shell_template\""
-}
+BINUTILS_SIG_URL=$(url_of BINUTILS_SIG_URL)
+GCC_STAGE1_SIG_URL=$(url_of GCC_STAGE1_SIG_URL)
+GCC_SIG_URL=$(url_of GCC_SIG_URL)
+MUSL_SIG_URL=$(url_of MUSL_SIG_URL)
+GNU_KEYRING_URL=$(url_of GNU_KEYRING_URL)
+MUSL_PUBKEY_URL=$(url_of MUSL_PUBKEY_URL)
 
 fetch "binutils-${BINUTILS_VERSION}.tar.xz" "$(expand_url "$BINUTILS_URL")"
+fetch "binutils-${BINUTILS_VERSION}.tar.xz.sig" "$(expand_url "$BINUTILS_SIG_URL")"
+
 fetch "gcc-${GCC_STAGE1_VERSION}.tar.xz" "$(expand_url "$GCC_STAGE1_URL")"
+fetch "gcc-${GCC_STAGE1_VERSION}.tar.xz.sig" "$(expand_url "$GCC_STAGE1_SIG_URL")"
+
 fetch "gcc-${GCC_VERSION}.tar.xz" "$(expand_url "$GCC_URL")"
+fetch "gcc-${GCC_VERSION}.tar.xz.sig" "$(expand_url "$GCC_SIG_URL")"
+
 fetch "musl-${MUSL_VERSION}.tar.gz" "$(expand_url "$MUSL_URL")"
+fetch "musl-${MUSL_VERSION}.tar.gz.asc" "$(expand_url "$MUSL_SIG_URL")"
+
+fetch "gnu-keyring.gpg" "$(expand_url "$GNU_KEYRING_URL")"
+fetch "musl.pub" "$(expand_url "$MUSL_PUBKEY_URL")"
