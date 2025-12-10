@@ -28,7 +28,7 @@ all: gcc2
 .PHONY: gcc2
 gcc2: ensure-dirs $(GCC_BUILD_DIR)/.built-gcc2
 
-$(GCC2_BUILD_DIR)/.built-gcc2: $(GCC_ARCHIVE)
+$(GCC_BUILD_DIR)/.built-gcc2: $(GCC_ARCHIVE)
 	@echo "[gcc2] Building final GCC for $(TARGET)"
 	@rm -rf $(GCC_BUILD_DIR)
 	@mkdir -p $(GCC_BUILD_DIR)
