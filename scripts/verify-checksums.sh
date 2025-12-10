@@ -1,9 +1,23 @@
-#!/usr/bin/env bash
-##
 # Copyright (c) 2025 Sebastiano Trombetta
-# SPDX-License-Identifier: MIT
-# Licensed under the MIT License. See LICENSE file for details.
-##
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -15,12 +29,10 @@ sha_of() {
 }
 
 BINUTILS_VERSION=$(sha_of BINUTILS_VERSION)
-GCC_STAGE1_VERSION=$(sha_of GCC_STAGE1_VERSION)
 GCC_VERSION=$(sha_of GCC_VERSION)
 MUSL_VERSION=$(sha_of MUSL_VERSION)
 
 BINUTILS_SHA=$(sha_of BINUTILS_SHA256)
-GCC_STAGE1_SHA=$(sha_of GCC_STAGE1_SHA256)
 GCC_SHA=$(sha_of GCC_SHA256)
 MUSL_SHA=$(sha_of MUSL_SHA256)
 
@@ -35,12 +47,10 @@ ensure_checksum_set() {
 }
 
 ensure_checksum_set "binutils" "$BINUTILS_SHA"
-ensure_checksum_set "GCC (stage1)" "$GCC_STAGE1_SHA"
 ensure_checksum_set "GCC" "$GCC_SHA"
 ensure_checksum_set "musl" "$MUSL_SHA"
 
 SIG_BINUTILS="binutils-${BINUTILS_VERSION}.tar.xz.sig"
-SIG_GCC_STAGE1="gcc-${GCC_STAGE1_VERSION}.tar.xz.sig"
 SIG_GCC="gcc-${GCC_VERSION}.tar.xz.sig"
 SIG_MUSL="musl-${MUSL_VERSION}.tar.gz.asc"
 
@@ -61,7 +71,6 @@ EOF
 
 for signature in \
   "$DOWNLOADS_DIR/$SIG_BINUTILS" \
-  "$DOWNLOADS_DIR/$SIG_GCC_STAGE1" \
   "$DOWNLOADS_DIR/$SIG_GCC" \
   "$DOWNLOADS_DIR/$SIG_MUSL"; do
   ensure_file_present "$signature" "signature file"
@@ -72,7 +81,6 @@ ensure_file_present "$MUSL_PUBKEY" "musl public key"
 
 for archive in \
   "$DOWNLOADS_DIR/binutils-${BINUTILS_VERSION}.tar.xz" \
-  "$DOWNLOADS_DIR/gcc-${GCC_STAGE1_VERSION}.tar.xz" \
   "$DOWNLOADS_DIR/gcc-${GCC_VERSION}.tar.xz" \
   "$DOWNLOADS_DIR/musl-${MUSL_VERSION}.tar.gz"; do
   ensure_file_present "$archive" "source archive"
@@ -96,14 +104,12 @@ verify_signature() {
 
 echo "Verifying PGP signatures..."
 verify_signature "$SIG_BINUTILS" "binutils-${BINUTILS_VERSION}.tar.xz"
-verify_signature "$SIG_GCC_STAGE1" "gcc-${GCC_STAGE1_VERSION}.tar.xz"
 verify_signature "$SIG_GCC" "gcc-${GCC_VERSION}.tar.xz"
 verify_signature "$SIG_MUSL" "musl-${MUSL_VERSION}.tar.gz"
 echo "All signatures verified."
 
 cat > "$DOWNLOADS_DIR/.checksums" <<EOF_SUMS
 $BINUTILS_SHA  binutils-${BINUTILS_VERSION}.tar.xz
-$GCC_STAGE1_SHA  gcc-${GCC_STAGE1_VERSION}.tar.xz
 $GCC_SHA  gcc-${GCC_VERSION}.tar.xz
 $MUSL_SHA  musl-${MUSL_VERSION}.tar.gz
 EOF_SUMS

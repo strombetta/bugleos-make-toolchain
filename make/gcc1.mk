@@ -19,18 +19,7 @@
 # SOFTWARE.
 
 THIS_MAKEFILE := $(lastword $(MAKEFILE_LIST))
-include $(abspath $(dir $(THIS_MAKEFILE))/common.mk)
-
-TOOLCHAIN_BIN := $(TOOLCHAIN)/bin
-PATH := $(TOOLCHAIN_BIN):$(PATH)
-export PATH
-export NM_FOR_TARGET			:= $(TARGET)-nm
-export AR_FOR_TARGET			:= $(TARGET)-ar
-export AS_FOR_TARGET			:= $(TARGET)-as
-export LD_FOR_TARGET			:= $(TARGET)-ld
-export RANLIB_FOR_TARGET	:= $(TARGET)-ranlib
-export OBJDUMP_FOR_TARGET	:= $(TARGET)-objdump
-export OBJCOPY_FOR_TARGET	:= $(TARGET)-objcopy
+include $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/common.mk)
 
 .PHONY: all
 all: gcc1
@@ -38,12 +27,12 @@ all: gcc1
 .PHONY: gcc1
 gcc1: ensure-dirs $(GCC1_BUILD_DIR)/.built-stage1
 
-$(GCC1_BUILD_DIR)/.built-stage1: $(GCC_STAGE1_ARCHIVE)
+$(GCC1_BUILD_DIR)/.built-stage1: $(GCC_ARCHIVE)
 	@echo "[BugleOS] Building GNU GCC v$(GCC_VERSION) for $(TARGET)"
 	@mkdir -p $(GCC1_BUILD_DIR)
 	@$(MAKE) -f $(THIS_MAKEFILE) unpack-gcc1
-	@cd $(GCC_STAGE1_SRC_DIR) && ./contrib/download_prerequisites > $(LOGS_DIR)/gcc1-prereqs.log 2>&1 || true
-	@cd $(GCC1_BUILD_DIR) && $(GCC_STAGE1_SRC_DIR)/configure \
+	@cd $(GCC_SRC_DIR) && ./contrib/download_prerequisites > $(LOGS_DIR)/gcc1-prereqs.log 2>&1 || true
+	@cd $(GCC1_BUILD_DIR) && $(GCC_SRC_DIR)/configure \
 		--target=$(TARGET) \
 		--prefix=$(TOOLCHAIN) \
 		--with-sysroot=$(SYSROOT) \

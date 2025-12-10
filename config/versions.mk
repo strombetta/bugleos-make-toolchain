@@ -23,20 +23,14 @@ BINUTILS_URL := https://ftp.gnu.org/gnu/binutils/binutils-$(BINUTILS_VERSION).ta
 BINUTILS_SIG_URL := https://ftp.gnu.org/gnu/binutils/binutils-$(BINUTILS_VERSION).tar.xz.sig
 BINUTILS_SHA256 := 5fe101e6fe9d18fdec95962d81ed670fdee5f37e3f48f0bef87bddf862513aa5
 
-GCC_STAGE1_VERSION := 15.2.0
-GCC_STAGE1_URL := https://ftp.gnu.org/gnu/gcc/gcc-$(GCC_STAGE1_VERSION)/gcc-$(GCC_STAGE1_VERSION).tar.xz
-GCC_STAGE1_SIG_URL := https://ftp.gnu.org/gnu/gcc/gcc-$(GCC_STAGE1_VERSION)/gcc-$(GCC_STAGE1_VERSION).tar.xz.sig
-GCC_STAGE1_SHA256 := 438fd996826b0c82485a29da03a72d71d6e3541a83ec702df4271f6fe025d24e
-
 GCC_VERSION := 15.2.0
 GCC_URL := https://ftp.gnu.org/gnu/gcc/gcc-$(GCC_VERSION)/gcc-$(GCC_VERSION).tar.xz
 GCC_SIG_URL := https://ftp.gnu.org/gnu/gcc/gcc-$(GCC_VERSION)/gcc-$(GCC_VERSION).tar.xz.sig
 GCC_SHA256 := 438fd996826b0c82485a29da03a72d71d6e3541a83ec702df4271f6fe025d24e
+GNU_KEYRING_URL := https://ftp.gnu.org/gnu/gnu-keyring.gpg
 
 MUSL_VERSION := 1.2.4
 MUSL_URL := https://musl.libc.org/releases/musl-$(MUSL_VERSION).tar.gz
 MUSL_SIG_URL := https://musl.libc.org/releases/musl-$(MUSL_VERSION).tar.gz.asc
 MUSL_SHA256 := 7a35eae33d5372a7c0da1188de798726f68825513b7ae3ebe97aaaa52114f039
-
-GNU_KEYRING_URL := https://ftp.gnu.org/gnu/gnu-keyring.gpg
 MUSL_PUBKEY_URL := https://musl.libc.org/musl.pub
