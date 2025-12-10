@@ -29,7 +29,6 @@ gcc1: ensure-dirs $(GCC_BUILD_DIR)/.built-stage1
 
 $(GCC_BUILD_DIR)/.built-stage1: $(GCC_ARCHIVE)
 	@echo "[BugleOS] Building GNU GCC v$(GCC_VERSION) for $(TARGET)"
-	@echo "[Debug] Path=$(PATH)"
 	@rm -rf $(GCC_BUILD_DIR)
 	@mkdir -p $(GCC_BUILD_DIR)
 	@$(MAKE) -f $(THIS_MAKEFILE) unpack-gcc
