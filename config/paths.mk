@@ -13,12 +13,12 @@ LOGS_DIR ?= $(ROOT_DIR)/logs
 
 HOST_ARCH := $(shell uname -m)
 HOST_TARGET := $(shell \
-  case "$(HOST_ARCH)" in \
-    x86_64|amd64)		echo x86_64-bugleos-linux-musl ;; \
-    i686|i386)			echo i686-bugleos-linux-musl ;; \
-    aarch64|arm64)	echo aarch64-bugleos-linux-musl ;; \
-    *) 							echo ;; \
-	esac)
+  arch="$(HOST_ARCH)"; \
+  if [ "$$arch" = "x86_64" ] || [ "$$arch" = "amd64" ]; then echo x86_64-bugleos-linux-musl; \
+  elif [ "$$arch" = "i686" ] || [ "$$arch" = "i386" ]; then echo i686-bugleos-linux-musl; \
+  elif [ "$$arch" = "aarch64" ] || [ "$$arch" = "arm64" ]; then echo aarch64-bugleos-linux-musl; \
+  else echo; \
+  fi)
 
 TARGET ?= $(if $(HOST_TARGET),$(HOST_TARGET),$(error Unsupported host architecture '$(HOST_ARCH)'; please set TARGET explicitly))
 
