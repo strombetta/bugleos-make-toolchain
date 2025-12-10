@@ -39,7 +39,7 @@ all: gcc1
 gcc1: ensure-dirs $(GCC1_BUILD_DIR)/.built-stage1
 
 $(GCC1_BUILD_DIR)/.built-stage1: $(GCC_STAGE1_ARCHIVE)
-	@echo "[gcc1] Building bootstrap GCC for $(TARGET)"
+	@echo "[BugleOS] Building GNU GCC v$(GCC_VERSION) for $(TARGET)"
 	@mkdir -p $(GCC1_BUILD_DIR)
 	@$(MAKE) -f $(THIS_MAKEFILE) unpack-gcc1
 	@cd $(GCC_STAGE1_SRC_DIR) && ./contrib/download_prerequisites > $(LOGS_DIR)/gcc1-prereqs.log 2>&1 || true
@@ -69,3 +69,10 @@ $(GCC1_BUILD_DIR)/.built-stage1: $(GCC_STAGE1_ARCHIVE)
 	@$(MAKE) -C $(GCC1_BUILD_DIR) install-gcc > $(LOGS_DIR)/gcc1-install.log 2>&1
 	@$(MAKE) -C $(GCC1_BUILD_DIR) install-target-libgcc > $(LOGS_DIR)/gcc1-libgcc-install.log 2>&1
 	@touch $@
+
+	check-toolchain:
+		@echo "PATH = $(PATH)"
+		@which $(TARGET)-nm || echo "ERROR: $(TARGET)-nm non trovato"
+		@which $(TARGET)-ld || echo "ERROR: $(TARGET)-ld non trovato"
+		@echo "NM_FOR_TARGET = $(NM_FOR_TARGET)"
+		@echo "LD_FOR_TARGET = $(LD_FOR_TARGET)"
