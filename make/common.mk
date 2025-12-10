@@ -28,9 +28,6 @@ GCC_BUILD_DIR := $(BUILDS_DIR)/gcc
 MUSL_BUILD_DIR := $(BUILDS_DIR)/musl
 BINUTILS2_BUILD_DIR := $(BUILDS_DIR)/binutils-stage2
 
-# Tools
-MAKEFLAGS += --no-builtin-rules
-
 .PHONY: ensure-dirs
 ensure-dirs:
 	@mkdir -p $(DOWNLOADS_DIR) $(SOURCES_DIR) $(BUILDS_DIR) $(OUT_DIR) $(TOOLCHAIN) $(SYSROOT) $(LOGS_DIR)
