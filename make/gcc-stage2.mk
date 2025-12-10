@@ -44,7 +44,7 @@ $(GCC_BUILD_DIR)/.built-gcc-stage2: $(GCC_ARCHIVE)
 	    --disable-multilib \
 	    --disable-libsanitizer \
 	    --disable-libitm \
-		 ----disable-libstdcxx-backtrace \
+		 --disable-libstdcxx-backtrace \
 	    --enable-checking=release \
 	    --enable-threads=posix \
 	    > $(LOGS_DIR)/gcc-stage2-configure.log 2>&1
