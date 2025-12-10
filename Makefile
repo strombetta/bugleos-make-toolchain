@@ -28,17 +28,20 @@ load_target = $(strip $(shell awk -F':=' '/^TARGET/ {gsub(/[ \t]/,"",$$2);print 
 .PHONY: $(ARCHES) toolchain binutils-stage1 gcc-stage1 musl binutils-stage2 gcc-stage2 metadata clean distclean check help
 
 help:
-	@echo "BugleOS Toolchain builder"
+	@echo "BugleOS Cross-toolchain builder"
 	@echo
 	@echo "Targets:"
-	@echo "  make x86_64        Build toolchain for x86_64"
-	@echo "  make aarch64       Build toolchain for aarch64"
+	@echo "  make x86_64        Build BugleOS cross-toolchain for x86_64 architecture"
+	@echo "  make aarch64       Build BugleOS cross-toolchain for aarch64 architecture"
 	@echo "  make clean         Remove builds and logs"
 	@echo "  make distclean     Full cleanup"
 	@echo "  make check TARGET=<triplet>  Sanity-check an existing toolchain"
 
 $(ARCHES):
 	@$(MAKE) TARGET=$(call load_target,$@) toolchain
+
+guard-%:
+	@test -n "$($*)" || { echo "ERROR: $* is not set"; exit 1; }
 
 binutils-stage1:
 	@$(MAKE) -f make/binutils-stage1.mk TARGET=$(TARGET) binutils-stage1
@@ -66,3 +69,11 @@ clean:
 
 distclean: clean
 	@rm -rf $(OUT_DIR)
+
+check: guard-TARGET
+	@echo "[BugleOS] Checking toolchain for $(TARGET)"
+	@command -v $(TARGET)-gcc >/dev/null 2>&1 || { echo "ERROR: $(TARGET)-gcc not found"; exit 1; }
+	@echo 'int main(void){return 0;}' > /tmp/bugleos-hello.c
+	@$(TARGET)-gcc /tmp/bugleos-hello.c -o /tmp/bugleos-hello || { echo "ERROR: failed to build test program"; exit 1; }
+	@echo "[BugleOS] Toolchain for $(TARGET) seems OK"
+	@rm -f /tmp/bugleos-hello.c /tmp/bugleos-hello
