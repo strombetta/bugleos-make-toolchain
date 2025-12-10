@@ -38,6 +38,7 @@ $(GCC_BUILD_DIR)/.built-gcc2: $(GCC_ARCHIVE)
 	    --target=$(TARGET) \
 	    --prefix=$(TOOLCHAIN) \
 	    --with-sysroot=$(SYSROOT) \
+		 --with-native-system-header-dir=/usr/include \
 	    --enable-languages=c,c++ \
 	    --disable-nls \
 	    --disable-multilib \

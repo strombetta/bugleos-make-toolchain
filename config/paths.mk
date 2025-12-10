@@ -1,3 +1,4 @@
+#
 # Copyright (c) 2025 Sebastiano Trombetta
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -29,7 +30,6 @@ HOST_ARCH := $(shell uname -m)
 HOST_TARGET := $(shell \
   arch="$(HOST_ARCH)"; \
   if [ "$$arch" = "x86_64" ] || [ "$$arch" = "amd64" ]; then echo x86_64-bugleos-linux-musl; \
-  elif [ "$$arch" = "i686" ] || [ "$$arch" = "i386" ]; then echo i686-bugleos-linux-musl; \
   elif [ "$$arch" = "aarch64" ] || [ "$$arch" = "arm64" ]; then echo aarch64-bugleos-linux-musl; \
   else echo; \
   fi)

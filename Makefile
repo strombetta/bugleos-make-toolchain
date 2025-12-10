@@ -22,20 +22,16 @@
 include config/paths.mk
 include config/versions.mk
 
-ARCHES := x86_64 i686 aarch64
+ARCHES := aarch64 x86_64
 
 load_target = $(strip $(shell awk -F':=' '/^TARGET/ {gsub(/[ \t]/,"",$$2);print $$2}' config/arch/$(1).mk))
 X86_64_TARGET := $(call load_target,x86_64)
-I686_TARGET := $(call load_target,i686)
 AARCH64_TARGET := $(call load_target,aarch64)
 
 .PHONY: $(ARCHES) toolchain binutils1 gcc1 musl binutils2 gcc2 metadata clean distclean check
 
 x86_64:
 	@$(MAKE) TARGET=$(X86_64_TARGET) toolchain
-
-i686:
-	@$(MAKE) TARGET=$(I686_TARGET) toolchain
 
 aarch64:
 	@$(MAKE) TARGET=$(AARCH64_TARGET) toolchain
@@ -61,16 +57,8 @@ metadata:
 
 toolchain: binutils1 gcc1 musl binutils2 gcc2 metadata
 
-check:
-	@echo "PATH = $(PATH)"
-	@which $(TARGET)-nm || echo "ERROR: $(TARGET)-nm non trovato"
-	@which $(TARGET)-ld || echo "ERROR: $(TARGET)-ld non trovato"
-	@echo "NM_FOR_TARGET = $(NM_FOR_TARGET)"
-	@echo "LD_FOR_TARGET = $(LD_FOR_TARGET)"
-
 clean:
 	@rm -rf $(BUILDS_DIR) $(LOGS_DIR)
 
 distclean: clean
 	@rm -rf $(OUT_DIR)
-
