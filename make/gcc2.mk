@@ -32,7 +32,7 @@ $(GCC_BUILD_DIR)/.built-gcc2: $(GCC_ARCHIVE)
 	@echo "[gcc2] Building final GCC for $(TARGET)"
 	@rm -rf $(GCC_BUILD_DIR)
 	@mkdir -p $(GCC_BUILD_DIR)
-	@$(MAKE) unpack-gcc
+	@$(MAKE) -f $(THIS_MAKEFILE) unpack-gcc
 	@cd $(GCC_SRC_DIR) && ./contrib/download_prerequisites > $(LOGS_DIR)/gcc2-prereqs.log 2>&1 || true
 	@cd $(GCC_BUILD_DIR) && $(GCC_SRC_DIR)/configure \
 	    --target=$(TARGET) \
