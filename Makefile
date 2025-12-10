@@ -23,18 +23,22 @@ include config/paths.mk
 include config/versions.mk
 
 ARCHES := aarch64 x86_64
-
 load_target = $(strip $(shell awk -F':=' '/^TARGET/ {gsub(/[ \t]/,"",$$2);print $$2}' config/arch/$(1).mk))
-X86_64_TARGET := $(call load_target,x86_64)
-AARCH64_TARGET := $(call load_target,aarch64)
 
-.PHONY: $(ARCHES) toolchain binutils-stage1 gcc-stage1 musl binutils-stage2 gcc-stage2 metadata clean distclean check
+.PHONY: $(ARCHES) toolchain binutils-stage1 gcc-stage1 musl binutils-stage2 gcc-stage2 metadata clean distclean check help
 
-x86_64:
-	@$(MAKE) TARGET=$(X86_64_TARGET) toolchain
+help:
+	@echo "BugleOS Toolchain builder"
+	@echo
+	@echo "Targets:"
+	@echo "  make x86_64        Build toolchain for x86_64"
+	@echo "  make aarch64       Build toolchain for aarch64"
+	@echo "  make clean         Remove builds and logs"
+	@echo "  make distclean     Full cleanup"
+	@echo "  make check TARGET=<triplet>  Sanity-check an existing toolchain"
 
-aarch64:
-	@$(MAKE) TARGET=$(AARCH64_TARGET) toolchain
+$(ARCHES):
+	@$(MAKE) TARGET=$(call load_target,$@) toolchain
 
 binutils-stage1:
 	@$(MAKE) -f make/binutils-stage1.mk TARGET=$(TARGET) binutils-stage1
