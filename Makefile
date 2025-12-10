@@ -28,7 +28,7 @@ load_target = $(strip $(shell awk -F':=' '/^TARGET/ {gsub(/[ \t]/,"",$$2);print 
 X86_64_TARGET := $(call load_target,x86_64)
 AARCH64_TARGET := $(call load_target,aarch64)
 
-.PHONY: $(ARCHES) toolchain binutils1 gcc1 musl binutils2 gcc2 metadata clean distclean check
+.PHONY: $(ARCHES) toolchain binutils-stage1 gcc1 musl binutils-stage2 gcc2 metadata clean distclean check
 
 x86_64:
 	@$(MAKE) TARGET=$(X86_64_TARGET) toolchain
@@ -36,8 +36,8 @@ x86_64:
 aarch64:
 	@$(MAKE) TARGET=$(AARCH64_TARGET) toolchain
 
-binutils1:
-	@$(MAKE) -f make/binutils1.mk TARGET=$(TARGET) binutils1
+binutils-stage1:
+	@$(MAKE) -f make/binutils-stage1.mk TARGET=$(TARGET) binutils-stage1
 
 gcc1:
 	@$(MAKE) -f make/gcc1.mk TARGET=$(TARGET) gcc1
@@ -45,8 +45,8 @@ gcc1:
 musl:
 	@$(MAKE) -f make/musl.mk TARGET=$(TARGET) musl
 
-binutils2:
-	@$(MAKE) -f make/binutils2.mk TARGET=$(TARGET) binutils2
+binutils-stage2:
+	@$(MAKE) -f make/binutils-stage2.mk TARGET=$(TARGET) binutils-stage2
 
 gcc2:
 	@$(MAKE) -f make/gcc2.mk TARGET=$(TARGET) gcc2
@@ -55,7 +55,7 @@ metadata:
 	@ROOT_DIR=$(ROOT_DIR) TARGET=$(TARGET) TOOLCHAIN=$(TOOLCHAIN) SYSROOT=$(SYSROOT) \
 	  $(ROOT_DIR)/scripts/gen-metadata.sh
 
-toolchain: binutils1 gcc1 musl binutils2 gcc2 metadata
+toolchain: binutils-stage1 gcc1 musl binutils-stage2 gcc2 metadata
 
 clean:
 	@rm -rf $(BUILDS_DIR) $(LOGS_DIR)

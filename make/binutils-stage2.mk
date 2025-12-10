@@ -23,23 +23,24 @@ THIS_MAKEFILE := $(lastword $(MAKEFILE_LIST))
 include $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/common.mk)
 
 .PHONY: all
-all: binutils1
+all: binutils-stage2
 
-.PHONY: binutils1
-binutils1: ensure-dirs $(BINUTILS1_BUILD_DIR)/.built-stage1
+.PHONY: binutils-stage2
+binutils-stage2: ensure-dirs $(BINUTILS2_BUILD_DIR)/.built-stage2
 
-$(BINUTILS1_BUILD_DIR)/.built-stage1: $(BINUTILS_ARCHIVE)
-	@echo "[BugleOS] Building GNU Binutils v$(BINUTILS_VERSION) for $(TARGET)"
-	@mkdir -p $(BINUTILS1_BUILD_DIR)
+$(BINUTILS2_BUILD_DIR)/.built-stage2: $(BINUTILS_ARCHIVE)
+	@echo "[binutils-stage2] Rebuilding binutils against sysroot for $(TARGET)"
+	@rm -rf $(BINUTILS2_BUILD_DIR)
+	@mkdir -p $(BINUTILS2_BUILD_DIR)
 	@$(MAKE) -f $(THIS_MAKEFILE) unpack-binutils
-	@cd $(BINUTILS1_BUILD_DIR) && $(BINUTILS_SRC_DIR)/configure \
+	@cd $(BINUTILS2_BUILD_DIR) && $(BINUTILS_SRC_DIR)/configure \
 	--target=$(TARGET) \
 	--prefix=$(TOOLCHAIN) \
 	--with-sysroot=$(SYSROOT) \
 	--disable-nls \
 	--disable-werror \
 	--enable-deterministic-archives \
-	> $(LOGS_DIR)/binutils1-configure.log 2>&1
-	@$(MAKE) -C $(BINUTILS1_BUILD_DIR) -j$(JOBS) > $(LOGS_DIR)/binutils1-build.log 2>&1
-	@$(MAKE) -C $(BINUTILS1_BUILD_DIR) install > $(LOGS_DIR)/binutils1-install.log 2>&1
+	> $(LOGS_DIR)/binutils-stage2-configure.log 2>&1
+	@$(MAKE) -C $(BINUTILS2_BUILD_DIR) -j$(JOBS) > $(LOGS_DIR)/binutils-stage2-build.log 2>&1
+	@$(MAKE) -C $(BINUTILS2_BUILD_DIR) install > $(LOGS_DIR)/binutils-stage2-install.log 2>&1
 	@touch $@
