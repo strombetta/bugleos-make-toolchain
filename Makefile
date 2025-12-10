@@ -55,7 +55,7 @@ gcc2:
 	@$(MAKE) -f make/gcc2.mk TARGET=$(TARGET) gcc2
 
 metadata:
-	@ROOT_DIR=$(ROOT_DIR) TARGET=$(TARGET) TOOLCHAIN_DIR=$(TOOLCHAIN_DIR) SYSROOT=$(SYSROOT) \
+	@ROOT_DIR=$(ROOT_DIR) TARGET=$(TARGET) TOOLCHAIN=$(TOOLCHAIN) SYSROOT=$(SYSROOT) \
 	  $(ROOT_DIR)/scripts/gen-metadata.sh
 
 toolchain: binutils1 gcc1 musl binutils2 gcc2 metadata

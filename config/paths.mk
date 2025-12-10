@@ -36,7 +36,7 @@ HOST_TARGET := $(shell \
 
 TARGET ?= $(if $(HOST_TARGET),$(HOST_TARGET),$(error Unsupported host architecture '$(HOST_ARCH)'; please set TARGET explicitly))
 
-TOOLCHAIN_DIR ?= $(OUT_DIR)/toolchain/$(TARGET)
+TOOLCHAIN ?= $(OUT_DIR)/toolchain/$(TARGET)
 SYSROOT ?= $(OUT_DIR)/sysroot/$(TARGET)
 
 JOBS ?= $(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)

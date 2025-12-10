@@ -10,7 +10,7 @@ include $(ROOT_DIR)/config/paths.mk
 include $(ROOT_DIR)/config/versions.mk
 
 # Ensure the previously built toolchain binaries are discoverable for subsequent stages.
-export PATH := $(TOOLCHAIN_DIR)/bin:$(PATH)
+export PATH := $(TOOLCHAIN)/bin:$(PATH)
 
 HOST ?= $(shell uname -m)-unknown-linux-gnu
 PKGDIR ?= $(ROOT_DIR)/patches
@@ -39,7 +39,7 @@ MAKEFLAGS += --no-builtin-rules
 
 .PHONY: ensure-dirs
 ensure-dirs:
-	@mkdir -p $(DOWNLOADS_DIR) $(SOURCES_DIR) $(BUILDS_DIR) $(OUT_DIR) $(TOOLCHAIN_DIR) $(SYSROOT) $(LOGS_DIR)
+	@mkdir -p $(DOWNLOADS_DIR) $(SOURCES_DIR) $(BUILDS_DIR) $(OUT_DIR) $(TOOLCHAIN) $(SYSROOT) $(LOGS_DIR)
 
 unpack-binutils:
 	@rm -rf $(BINUTILS_SRC_DIR)

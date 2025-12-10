@@ -21,7 +21,7 @@
 THIS_MAKEFILE := $(lastword $(MAKEFILE_LIST))
 include $(abspath $(dir $(THIS_MAKEFILE))/common.mk)
 
-TOOLCHAIN_BIN := $(TOOLCHAIN_DIR)/bin
+TOOLCHAIN_BIN := $(TOOLCHAIN)/bin
 PATH := $(TOOLCHAIN_BIN):$(PATH)
 export PATH
 export NM_FOR_TARGET			:= $(TARGET)-nm
@@ -45,7 +45,7 @@ $(GCC1_BUILD_DIR)/.built-stage1: $(GCC_STAGE1_ARCHIVE)
 	@cd $(GCC_STAGE1_SRC_DIR) && ./contrib/download_prerequisites > $(LOGS_DIR)/gcc1-prereqs.log 2>&1 || true
 	@cd $(GCC1_BUILD_DIR) && $(GCC_STAGE1_SRC_DIR)/configure \
 		--target=$(TARGET) \
-		--prefix=$(TOOLCHAIN_DIR) \
+		--prefix=$(TOOLCHAIN) \
 		--with-sysroot=$(SYSROOT) \
 		--with-newlib \
 		--with-native-system-header-dir=/usr/include \

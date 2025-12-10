@@ -19,7 +19,7 @@ $(BINUTILS2_BUILD_DIR)/.built-stage2: $(BINUTILS_ARCHIVE)
 	@$(MAKE) -f $(THIS_MAKEFILE) unpack-binutils
 	@cd $(BINUTILS2_BUILD_DIR) && $(BINUTILS_SRC_DIR)/configure \
 	--target=$(TARGET) \
-	--prefix=$(TOOLCHAIN_DIR) \
+	--prefix=$(TOOLCHAIN) \
 	--with-sysroot=$(SYSROOT) \
 	--disable-nls \
 	--disable-werror \

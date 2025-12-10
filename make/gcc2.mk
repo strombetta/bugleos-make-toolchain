@@ -19,7 +19,7 @@ $(GCC2_BUILD_DIR)/.built-gcc2: $(GCC_ARCHIVE)
 	@cd $(GCC_SRC_DIR) && ./contrib/download_prerequisites > $(LOGS_DIR)/gcc2-prereqs.log 2>&1 || true
 	@cd $(GCC2_BUILD_DIR) && $(GCC_SRC_DIR)/configure \
 	    --target=$(TARGET) \
-	    --prefix=$(TOOLCHAIN_DIR) \
+	    --prefix=$(TOOLCHAIN) \
 	    --with-sysroot=$(SYSROOT) \
 	    --enable-languages=c,c++ \
 	    --disable-nls \
