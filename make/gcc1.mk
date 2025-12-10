@@ -29,6 +29,7 @@ gcc1: ensure-dirs $(GCC1_BUILD_DIR)/.built-stage1
 
 $(GCC1_BUILD_DIR)/.built-stage1: $(GCC_ARCHIVE)
 	@echo "[BugleOS] Building GNU GCC v$(GCC_VERSION) for $(TARGET)"
+	@echo "[Debug] Path=$(PATH)"
 	@mkdir -p $(GCC1_BUILD_DIR)
 	@$(MAKE) -f $(THIS_MAKEFILE) unpack-gcc1
 	@cd $(GCC_SRC_DIR) && ./contrib/download_prerequisites > $(LOGS_DIR)/gcc1-prereqs.log 2>&1 || true
