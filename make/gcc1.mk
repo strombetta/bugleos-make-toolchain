@@ -56,8 +56,8 @@ $(GCC_BUILD_DIR)/.built-stage1: $(GCC_ARCHIVE)
 		--enable-checking=release \
 		> $(LOGS_DIR)/gcc1-configure.log 2>&1
 	@$(MAKE) -C $(GCC_BUILD_DIR) -j$(JOBS) all-gcc > $(LOGS_DIR)/gcc1-build.log 2>&1
-	#@$(MAKE) -C $(GCC_BUILD_DIR) -j$(JOBS) all-target-libgcc > $(LOGS_DIR)/gcc1-libgcc-build.log 2>&1
 	@$(MAKE) -C $(GCC_BUILD_DIR) install-gcc > $(LOGS_DIR)/gcc1-install.log 2>&1
+	@$(MAKE) -C $(GCC_BUILD_DIR) -j$(JOBS) all-target-libgcc > $(LOGS_DIR)/gcc1-libgcc-build.log 2>&1
 	#@$(MAKE) -C $(GCC_BUILD_DIR) install-target-libgcc > $(LOGS_DIR)/gcc1-libgcc-install.log 2>&1
 	@touch $@
 
