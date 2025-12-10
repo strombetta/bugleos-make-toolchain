@@ -70,9 +70,3 @@ $(GCC1_BUILD_DIR)/.built-stage1: $(GCC_STAGE1_ARCHIVE)
 	@$(MAKE) -C $(GCC1_BUILD_DIR) install-target-libgcc > $(LOGS_DIR)/gcc1-libgcc-install.log 2>&1
 	@touch $@
 
-	check-toolchain:
-		@echo "PATH = $(PATH)"
-		@which $(TARGET)-nm || echo "ERROR: $(TARGET)-nm non trovato"
-		@which $(TARGET)-ld || echo "ERROR: $(TARGET)-ld non trovato"
-		@echo "NM_FOR_TARGET = $(NM_FOR_TARGET)"
-		@echo "LD_FOR_TARGET = $(LD_FOR_TARGET)"
