@@ -32,7 +32,7 @@ endif
 
 # $(call do_step, TAG, LABEL, COMMAND, LOGFILE)
 define do_step
-	$(Q)printf "  %-7s %s\n" "$(1)" "$(2)"
+	$(Q)printf "  %-8s %s\n" "$(1)" "$(2)"
 	$(Q){ $(3); } > "$(LOGS_DIR)/$(4).log" 2>&1 || { \
 		printf "  %-7s %s [FAILED] (see %s)\n" "$(1)" "$(2)" "$(LOGS_DIR)/$(4).log"; \
 	exit 1; }
