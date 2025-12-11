@@ -42,6 +42,10 @@ $(BINUTILS1_BUILD_DIR)/.built-stage1: $(BINUTILS_ARCHIVE)
 		--enable-deterministic-archives, \
 		binutils-stage1-configure.log \
     )
-	$(Q)$(MAKE) -C $(BINUTILS1_BUILD_DIR) -j$(JOBS) > $(LOGS_DIR)/binutils-stage1-build.log 2>&1
+
+    $(call do_step,BLD,binutils-stage1, \
+	    $(MAKE) -C $(BINUTILS1_BUILD_DIR) -j$(JOBS), \
+        binutils-stage1-build.log \
+    )
 	$(Q)$(MAKE) -C $(BINUTILS1_BUILD_DIR) install > $(LOGS_DIR)/binutils-stage1-install.log 2>&1
 	$(Q)touch $@
