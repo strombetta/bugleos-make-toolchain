@@ -30,7 +30,7 @@ gcc-stage2: ensure-dirs $(GCC_BUILD_DIR)/.built-gcc-stage2
 
 $(GCC_BUILD_DIR)/.built-gcc-stage2: $(GCC_ARCHIVE)
 	$(Q)rm -rf $(GCC_BUILD_DIR)
-	S(Q)mkdir -p $(GCC_BUILD_DIR)
+	$(Q)mkdir -p $(GCC_BUILD_DIR)
 
 	$(call do_step,EXTRACT,gcc-stage2, \
 		$(MAKE) -f $(THIS_MAKEFILE) unpack-gcc, \
