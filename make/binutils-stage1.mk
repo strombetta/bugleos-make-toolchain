@@ -40,7 +40,7 @@ $(BINUTILS1_BUILD_DIR)/.built-stage1: $(BINUTILS_ARCHIVE)
 		--disable-nls \
 		--disable-werror \
 		--enable-deterministic-archives, \
-		binutils-stage1-configure.log
+		binutils-stage1-configure.log \
     )
 	@$(MAKE) -C $(BINUTILS1_BUILD_DIR) -j$(JOBS) > $(LOGS_DIR)/binutils-stage1-build.log 2>&1
 	@$(MAKE) -C $(BINUTILS1_BUILD_DIR) install > $(LOGS_DIR)/binutils-stage1-install.log 2>&1
