@@ -29,18 +29,29 @@ all: binutils-stage2
 binutils-stage2: ensure-dirs $(BINUTILS2_BUILD_DIR)/.built-stage2
 
 $(BINUTILS2_BUILD_DIR)/.built-stage2: $(BINUTILS_ARCHIVE)
-	@echo "[binutils-stage2] Rebuilding binutils against sysroot for $(TARGET)"
-	@rm -rf $(BINUTILS2_BUILD_DIR)
-	@mkdir -p $(BINUTILS2_BUILD_DIR)
-	@$(MAKE) -f $(THIS_MAKEFILE) unpack-binutils
-	@cd $(BINUTILS2_BUILD_DIR) && $(BINUTILS_SRC_DIR)/configure \
-	--target=$(TARGET) \
-	--prefix=$(TOOLCHAIN) \
-	--with-sysroot=$(SYSROOT) \
-	--disable-nls \
-	--disable-werror \
-	--enable-deterministic-archives \
-	> $(LOGS_DIR)/binutils-stage2-configure.log 2>&1
-	@$(MAKE) -C $(BINUTILS2_BUILD_DIR) -j$(JOBS) > $(LOGS_DIR)/binutils-stage2-build.log 2>&1
-	@$(MAKE) -C $(BINUTILS2_BUILD_DIR) install > $(LOGS_DIR)/binutils-stage2-install.log 2>&1
-	@touch $@
+	$(Q)rm -rf $(BINUTILS2_BUILD_DIR)
+	$(Q)mkdir -p $(BINUTILS2_BUILD_DIR)
+
+	$(call do_step,EXTRACT,binutils-stage2, \
+		$(MAKE) -f $(THIS_MAKEFILE) unpack-binutils, \
+		binutils-stage2-extract)
+
+	$(call do_step,CONFIG,binutils-stage2, \
+		cd $(BINUTILS2_BUILD_DIR) && $(BINUTILS_SRC_DIR)/configure \
+		--target=$(TARGET) \
+		--prefix=$(TOOLCHAIN) \
+		--with-sysroot=$(SYSROOT) \
+		--disable-nls \
+		--disable-werror \
+		--enable-deterministic-archives, \
+		binutils-stage2-configure)
+
+	$(call do_step,BUILD,binutils-stage2, \
+		$(MAKE) -C $(BINUTILS2_BUILD_DIR) -j$(JOBS), \
+	binutils-stage2-build)
+
+	$(call do_step,INSTALL,binutils-stage2, \
+		$(MAKE) -C $(BINUTILS2_BUILD_DIR) install, \
+	binutils-stage2-install)
+
+	$(Q)touch $@
