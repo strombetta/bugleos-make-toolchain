@@ -29,34 +29,53 @@ all: gcc-stage1
 gcc-stage1: ensure-dirs $(GCC_BUILD_DIR)/.built-stage1
 
 $(GCC_BUILD_DIR)/.built-stage1: $(GCC_ARCHIVE)
-	@echo "[BugleOS] Building GNU GCC v$(GCC_VERSION) for $(TARGET)"
-	@rm -rf $(GCC_BUILD_DIR)
-	@mkdir -p $(GCC_BUILD_DIR)
-	@$(MAKE) -f $(THIS_MAKEFILE) unpack-gcc
-	@cd $(GCC_SRC_DIR) && ./contrib/download_prerequisites > $(LOGS_DIR)/gcc-stage1-prereqs.log 2>&1 || true
-	@cd $(GCC_BUILD_DIR) && $(GCC_SRC_DIR)/configure \
-		--target=$(TARGET) \
-		--prefix=$(TOOLCHAIN) \
-		--with-sysroot=$(SYSROOT) \
-		--with-newlib \
-		--with-native-system-header-dir=/usr/include \
-		--without-headers \
-		--disable-nls \
-		--disable-shared \
-		--disable-threads \
-		--disable-libmudflap \
-		--disable-decimal-float \
-		--disable-libatomic \
-		--disable-libgomp \
-		--disable-libquadmath \
-		--disable-libssp \
-		--disable-libvtv \
-		--disable-multilib \
-		--enable-languages=c \
-		--enable-checking=release \
-		> $(LOGS_DIR)/gcc-stage1-configure.log 2>&1
-	@$(MAKE) -C $(GCC_BUILD_DIR) -j$(JOBS) all-gcc > $(LOGS_DIR)/gcc-stage1-build.log 2>&1
-	@$(MAKE) -C $(GCC_BUILD_DIR) install-gcc > $(LOGS_DIR)/gcc-stage1-install.log 2>&1
-	@$(MAKE) -C $(GCC_BUILD_DIR) -j$(JOBS) all-target-libgcc > $(LOGS_DIR)/gcc-stage1-libgcc-build.log 2>&1
-	@$(MAKE) -C $(GCC_BUILD_DIR) install-target-libgcc > $(LOGS_DIR)/gcc-stage1-libgcc-install.log 2>&1
+	$(Q)rm -rf $(GCC_BUILD_DIR)
+	$(Q)mkdir -p $(GCC_BUILD_DIR)
+
+	$(call do_step,EXTRACT,gcc-stage1, \
+		$(MAKE) -f $(THIS_MAKEFILE) unpack-gcc, \
+		gcc-stage1-extract)
+	
+	$(call do_step,EXTRACT,gcc-stage1-prerequisites, \
+		cd $(GCC_SRC_DIR) && ./contrib/download_prerequisites, \
+		gcc-stage1-prereqs)
+
+	$(call do_step,CONFIG,gcc-stage1, \
+		cd $(GCC_BUILD_DIR) && $(GCC_SRC_DIR)/configure \
+			--target=$(TARGET) \
+			--prefix=$(TOOLCHAIN) \
+			--with-sysroot=$(SYSROOT) \
+			--with-newlib \
+			--with-native-system-header-dir=/usr/include \
+			--without-headers \
+			--disable-nls \
+			--disable-shared \
+			--disable-threads \
+			--disable-libmudflap \
+			--disable-decimal-float \
+			--disable-libatomic \
+			--disable-libgomp \
+			--disable-libquadmath \
+			--disable-libssp \
+			--disable-libvtv \
+			--disable-multilib \
+			--enable-languages=c \
+			--enable-checking=release, \
+			gcc-stage1-configure)
+	
+	$(call do_step,BUILD,gcc-stage1, \
+		$(MAKE) -C $(GCC_BUILD_DIR) -j$(JOBS) all-gcc, \
+		gcc-stage1-build)
+
+	$(call do_step,BUILD,gcc-stage1-libgcc, \
+		$(MAKE) -C $(GCC_BUILD_DIR) -j$(JOBS) all-target-libgcc, \
+		gcc-stage1-libgcc-build)
+
+	$(call do_step,INSTALL,gcc-stage1, \
+		$(MAKE) -C $(GCC_BUILD_DIR) install-gcc, \
+		gcc-stage1-install)
+
+	$(call do_step,INSTALL,gcc-stage1-libgcc, \
+		$(MAKE) -C $(GCC_BUILD_DIR) install-target-libgcc, \
+		gcc-stage1-libgcc-install)
 	@touch $@
