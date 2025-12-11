@@ -62,7 +62,7 @@ TARGET=x86_64-bugleos-linux-musl scripts/enter-env.sh
 
 ## Continuous Integration
 
-GitHub Actions runs shell linting and basic Makefile sanity checks on every push and pull request. The workflow lives in `.github/workflows/ci.yml` and ensures scripts remain syntactically correct while metadata generation stays functional.
+GitHub Actions runs shell linting, basic Makefile sanity checks, and a dry-run toolchain invocation for every architecture declared in `ARCHES` within the root `Makefile`. The workflow lives in `.github/workflows/ci.yml` and ensures scripts remain syntactically correct while metadata generation and per-architecture targets stay functional.
 
 # License
 This project is licensed under the MIT License. For the full text of the license, see the link:LICENSE[LICENSE] file.

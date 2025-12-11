@@ -30,3 +30,49 @@ jobs:
           make -f make/common.mk ensure-dirs
           make -C . -f Makefile -n clean
           ./scripts/gen-metadata.sh
+
+  discover-architectures:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.expand.outputs.matrix }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - id: expand
+        name: Build matrix from ARCHES in Makefile
+        run: |
+          arches=$(awk -F':=' '/^ARCHES/ {gsub(/[[:space:]]+/," ",$2); gsub(/^ /,"",$2); print $2}' Makefile)
+          if [ -z "$arches" ]; then
+            echo "Unable to determine architectures from Makefile" >&2
+            exit 1
+          fi
+
+          export ARCHES="$arches"
+
+          python - <<'PY'
+          import json
+          import os
+
+          arches = os.environ["ARCHES"].split()
+          with open("matrix.json", "w", encoding="utf-8") as handle:
+              json.dump({"arch": arches}, handle)
+          PY
+
+          echo "matrix=$(cat matrix.json)" >> "$GITHUB_OUTPUT"
+
+  build-matrix:
+    runs-on: ubuntu-latest
+    needs: [lint-and-sanity, discover-architectures]
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.discover-architectures.outputs.matrix) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare workspace
+        run: make -f make/common.mk ensure-dirs
+
+      - name: Dry-run toolchain build for ${{ matrix.arch }}
+        run: make -C . -f Makefile -n ${{ matrix.arch }}
