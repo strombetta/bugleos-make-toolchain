@@ -23,6 +23,13 @@ ROOT_DIR ?= $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/..)
 include $(ROOT_DIR)/config/paths.mk
 include $(ROOT_DIR)/config/versions.mk
 
+# define quite / verbose
+ifeq ($(V),1)
+	Q :=
+else
+	Q := @
+endif
+
 # $(call do_step, TAG, LABEL, COMMAND, LOGFILE)
 define do_step
 	$(Q)printf "  %-7s %s\n" "$(1)" "$(2)"
