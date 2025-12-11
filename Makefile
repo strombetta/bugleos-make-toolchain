@@ -25,9 +25,9 @@ include config/versions.mk
 MAKEFLAGS += --no-print-directory
 
 ifeq ($(V),1)
-  Q :=
+	Q :=
 else
-  Q := @
+	Q := @
 endif
 
 ARCHES := aarch64 x86_64
