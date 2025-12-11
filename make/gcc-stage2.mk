@@ -46,7 +46,7 @@ $(GCC_BUILD_DIR)/.built-gcc-stage2: $(GCC_ARCHIVE)
 		    --prefix=$(TOOLCHAIN) \
 		    --with-sysroot=$(SYSROOT) \
 			 --with-native-system-header-dir=/usr/include \
-		    --enable-languages=c,c++ \
+		    --enable-languages=c\,c++ \
 		    --disable-nls \
 		    --disable-multilib \
 		    --disable-libsanitizer \
