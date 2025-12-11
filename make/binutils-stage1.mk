@@ -32,7 +32,7 @@ $(BINUTILS1_BUILD_DIR)/.built-stage1: $(BINUTILS_ARCHIVE)
 	$(Q)mkdir -p $(BINUTILS1_BUILD_DIR)
 	$(Q)$(MAKE) -f $(THIS_MAKEFILE) unpack-binutils
 	
-	$(call do_step,CFG,binutils-stage1, \
+	$(call do_step,CONFIG,binutils-stage1, \
 		cd $(BINUTILS1_BUILD_DIR) && $(BINUTILS_SRC_DIR)/configure \
 		--target=$(TARGET) \
 		--prefix=$(TOOLCHAIN) \
@@ -42,11 +42,11 @@ $(BINUTILS1_BUILD_DIR)/.built-stage1: $(BINUTILS_ARCHIVE)
 		--enable-deterministic-archives, \
 		binutils-stage1-configure.log)
 
-	$(call do_step,BLD,binutils-stage1, \
+	$(call do_step,BUILD,binutils-stage1, \
 		$(MAKE) -C "$(BINUTILS1_BUILD_DIR)" -j"$(JOBS)", \
 		binutils-stage1-build.log)
 
-	$(call do_step,INS,binutils-stage1, \
+	$(call do_step,INSTALL,binutils-stage1, \
 		$(MAKE) -C "$(BINUTILS1_BUILD_DIR)" install, \
 		binutils-stage1-install.log)
 
