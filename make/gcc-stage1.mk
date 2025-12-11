@@ -78,4 +78,4 @@ $(GCC_BUILD_DIR)/.built-stage1: $(GCC_ARCHIVE)
 	$(call do_step,INSTALL,gcc-stage1-libgcc, \
 		$(MAKE) -C $(GCC_BUILD_DIR) install-target-libgcc, \
 		gcc-stage1-libgcc-install)
-	@touch $@
+	$(Q)touch $@
