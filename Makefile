@@ -24,12 +24,6 @@ include config/versions.mk
 
 MAKEFLAGS += --no-print-directory
 
-ifeq ($(V),1)
-	Q :=
-else
-	Q := @
-endif
-
 ARCHES := aarch64 x86_64
 load_target = $(strip $(shell awk -F':=' '/^TARGET/ {gsub(/[ \t]/,"",$$2);print $$2}' config/arch/$(1).mk))
 
