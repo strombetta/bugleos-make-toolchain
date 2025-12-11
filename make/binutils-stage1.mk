@@ -30,7 +30,7 @@ binutils-stage1: ensure-dirs $(BINUTILS1_BUILD_DIR)/.built-stage1
 
 $(BINUTILS1_BUILD_DIR)/.built-stage1: $(BINUTILS_ARCHIVE)
 	$(Q)mkdir -p $(BINUTILS1_BUILD_DIR)
-	@$(MAKE) -f $(THIS_MAKEFILE) unpack-binutils
+	$(Q)$(MAKE) -f $(THIS_MAKEFILE) unpack-binutils
 	
 	$(call do_step,CFG,binutils-stage1, \
 		cd $(BINUTILS1_BUILD_DIR) && $(BINUTILS_SRC_DIR)/configure \
@@ -42,6 +42,6 @@ $(BINUTILS1_BUILD_DIR)/.built-stage1: $(BINUTILS_ARCHIVE)
 		--enable-deterministic-archives, \
 		binutils-stage1-configure.log \
     )
-	@$(MAKE) -C $(BINUTILS1_BUILD_DIR) -j$(JOBS) > $(LOGS_DIR)/binutils-stage1-build.log 2>&1
-	@$(MAKE) -C $(BINUTILS1_BUILD_DIR) install > $(LOGS_DIR)/binutils-stage1-install.log 2>&1
-	@touch $@
+	$(Q)$(MAKE) -C $(BINUTILS1_BUILD_DIR) -j$(JOBS) > $(LOGS_DIR)/binutils-stage1-build.log 2>&1
+	$(Q)$(MAKE) -C $(BINUTILS1_BUILD_DIR) install > $(LOGS_DIR)/binutils-stage1-install.log 2>&1
+	$(Q)touch $@
