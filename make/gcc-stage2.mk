@@ -36,7 +36,7 @@ $(GCC_BUILD_DIR)/.built-gcc-stage2: $(GCC_ARCHIVE)
 		$(MAKE) -f $(THIS_MAKEFILE) unpack-gcc, \
 		gcc-stage2-extract)
 
-	$(call do_step,EXTRACT,gcc-stage1-prerequisites, \
+	$(call do_step,EXTRACT,gcc-stage2-prerequisites, \
 		cd $(GCC_SRC_DIR) && ./contrib/download_prerequisites, \
 		gcc-stage2-prereqs)
 
