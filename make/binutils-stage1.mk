@@ -29,17 +29,19 @@ all: binutils-stage1
 binutils-stage1: ensure-dirs $(BINUTILS1_BUILD_DIR)/.built-stage1
 
 $(BINUTILS1_BUILD_DIR)/.built-stage1: $(BINUTILS_ARCHIVE)
-	@echo "[BugleOS] Building GNU Binutils v$(BINUTILS_VERSION) for $(TARGET)"
-	@mkdir -p $(BINUTILS1_BUILD_DIR)
+	$(Q)mkdir -p $(BINUTILS1_BUILD_DIR)
 	@$(MAKE) -f $(THIS_MAKEFILE) unpack-binutils
-	@cd $(BINUTILS1_BUILD_DIR) && $(BINUTILS_SRC_DIR)/configure \
-	--target=$(TARGET) \
-	--prefix=$(TOOLCHAIN) \
-	--with-sysroot=$(SYSROOT) \
-	--disable-nls \
-	--disable-werror \
-	--enable-deterministic-archives \
-	> $(LOGS_DIR)/binutils-stage1-configure.log 2>&1
+	
+	$(call do_step,CFG,binutils-stage1, \
+		cd $(BINUTILS1_BUILD_DIR) && $(BINUTILS_SRC_DIR)/configure \
+		--target=$(TARGET) \
+		--prefix=$(TOOLCHAIN) \
+		--with-sysroot=$(SYSROOT) \
+		--disable-nls \
+		--disable-werror \
+		--enable-deterministic-archives \
+		> $(LOGS_DIR)/binutils-stage1-configure.log 2>&1
+	)
 	@$(MAKE) -C $(BINUTILS1_BUILD_DIR) -j$(JOBS) > $(LOGS_DIR)/binutils-stage1-build.log 2>&1
 	@$(MAKE) -C $(BINUTILS1_BUILD_DIR) install > $(LOGS_DIR)/binutils-stage1-install.log 2>&1
 	@touch $@
