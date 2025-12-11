@@ -30,8 +30,11 @@ binutils-stage1: ensure-dirs $(BINUTILS1_BUILD_DIR)/.built-stage1
 
 $(BINUTILS1_BUILD_DIR)/.built-stage1: $(BINUTILS_ARCHIVE)
 	$(Q)mkdir -p $(BINUTILS1_BUILD_DIR)
-	$(Q)$(MAKE) -f $(THIS_MAKEFILE) unpack-binutils
-	
+
+	$(call do_step,EXTRACT,binutils-stage1, \
+		$(MAKE) -f $(THIS_MAKEFILE) unpack-binutils, \
+		binutils-stage1-extract)
+
 	$(call do_step,CONFIG,binutils-stage1, \
 		cd $(BINUTILS1_BUILD_DIR) && $(BINUTILS_SRC_DIR)/configure \
 		--target=$(TARGET) \
@@ -40,14 +43,14 @@ $(BINUTILS1_BUILD_DIR)/.built-stage1: $(BINUTILS_ARCHIVE)
 		--disable-nls \
 		--disable-werror \
 		--enable-deterministic-archives, \
-		binutils-stage1-configure.log)
+		binutils-stage1-configure)
 
 	$(call do_step,BUILD,binutils-stage1, \
 		$(MAKE) -C "$(BINUTILS1_BUILD_DIR)" -j"$(JOBS)", \
-		binutils-stage1-build.log)
+		binutils-stage1-build)
 
 	$(call do_step,INSTALL,binutils-stage1, \
 		$(MAKE) -C "$(BINUTILS1_BUILD_DIR)" install, \
-		binutils-stage1-install.log)
+		binutils-stage1-install)
 
 	$(Q)touch $@
