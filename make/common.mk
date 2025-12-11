@@ -44,11 +44,18 @@ export PATH := $(TOOLCHAIN)/bin:$(PATH)
 HOST ?= $(shell uname -m)-unknown-linux-gnu
 PKGDIR ?= $(ROOT_DIR)/patches
 
+FETCH_SOURCES := $(ROOT_DIR)/scripts/fetch-sources.sh
+
 BINUTILS_ARCHIVE := $(DOWNLOADS_DIR)/binutils-$(BINUTILS_VERSION).tar.xz
+BINUTILS_SIG := $(DOWNLOADS_DIR)/binutils-$(BINUTILS_VERSION).tar.xz.sig
 BINUTILS_SRC_DIR := $(SOURCES_DIR)/binutils-$(BINUTILS_VERSION)
 GCC_ARCHIVE := $(DOWNLOADS_DIR)/gcc-$(GCC_VERSION).tar.xz
+GCC_SIG := $(DOWNLOADS_DIR)/gcc-$(GCC_VERSION).tar.xz.sig
 GCC_SRC_DIR := $(SOURCES_DIR)/gcc-$(GCC_VERSION)
+GNU_KEYRING := $(DOWNLOADS_DIR)/gnu-keyring.gpg
 MUSL_ARCHIVE := $(DOWNLOADS_DIR)/musl-$(MUSL_VERSION).tar.gz
+MUSL_SIG := $(DOWNLOADS_DIR)/musl-$(MUSL_VERSION).tar.gz.asc
+MUSL_PUBKEY := $(DOWNLOADS_DIR)/musl.pub
 MUSL_SRC_DIR := $(SOURCES_DIR)/musl-$(MUSL_VERSION)
 
 # Directory helpers
@@ -60,6 +67,13 @@ BINUTILS2_BUILD_DIR := $(BUILDS_DIR)/binutils-stage2
 .PHONY: ensure-dirs
 ensure-dirs:
 	@mkdir -p $(DOWNLOADS_DIR) $(SOURCES_DIR) $(BUILDS_DIR) $(OUT_DIR) $(TOOLCHAIN) $(SYSROOT) $(LOGS_DIR)
+
+.PHONY: fetch-sources
+fetch-sources: ensure-dirs
+	@$(FETCH_SOURCES)
+
+$(BINUTILS_ARCHIVE) $(BINUTILS_SIG) $(GCC_ARCHIVE) $(GCC_SIG) $(GNU_KEYRING) $(MUSL_ARCHIVE) $(MUSL_SIG) $(MUSL_PUBKEY): | ensure-dirs
+	@$(FETCH_SOURCES)
 
 unpack-binutils:
 	@rm -rf $(BINUTILS_SRC_DIR)

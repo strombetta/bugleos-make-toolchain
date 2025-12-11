@@ -20,7 +20,8 @@ BugleOS Toolchain builds deterministic cross-compilers and system headers for Bu
 
 ## Usage
 
-Fetch sources along with signatures and verify both checksums and PGP signatures (recommended before building):
+Sources, signatures, and keyrings are fetched automatically when invoking `make` if they are missing. You can also fetch them
+up-front and verify both checksums and PGP signatures (recommended before building):
 
 ```
 scripts/fetch-sources.sh
