@@ -50,6 +50,7 @@ GCC_ARCHIVE := $(DOWNLOADS_DIR)/gcc-$(GCC_VERSION).tar.xz
 GCC_SRC_DIR := $(SOURCES_DIR)/gcc-$(GCC_VERSION)
 MUSL_ARCHIVE := $(DOWNLOADS_DIR)/musl-$(MUSL_VERSION).tar.gz
 MUSL_SRC_DIR := $(SOURCES_DIR)/musl-$(MUSL_VERSION)
+SOURCES_STAMP := $(DOWNLOADS_DIR)/.verified
 
 # Directory helpers
 BINUTILS1_BUILD_DIR := $(BUILDS_DIR)/binutils-stage1
@@ -61,14 +62,24 @@ BINUTILS2_BUILD_DIR := $(BUILDS_DIR)/binutils-stage2
 ensure-dirs:
 	@mkdir -p $(DOWNLOADS_DIR) $(SOURCES_DIR) $(BUILDS_DIR) $(OUT_DIR) $(TOOLCHAIN) $(SYSROOT) $(LOGS_DIR)
 
-unpack-binutils:
+.PHONY: ensure-sources
+ensure-sources: $(SOURCES_STAMP)
+
+$(SOURCES_STAMP): | ensure-dirs
+	$(Q)$(ROOT_DIR)/scripts/fetch-sources.sh
+	$(Q)$(ROOT_DIR)/scripts/verify-checksums.sh
+	$(Q)touch $@
+
+$(BINUTILS_ARCHIVE) $(GCC_ARCHIVE) $(MUSL_ARCHIVE): $(SOURCES_STAMP)
+
+unpack-binutils: ensure-sources
 	@rm -rf $(BINUTILS_SRC_DIR)
 	@$(TAR) -xf $(BINUTILS_ARCHIVE) -C $(SOURCES_DIR)
 
-unpack-gcc:
+unpack-gcc: ensure-sources
 	@rm -rf $(GCC_SRC_DIR)
 	@$(TAR) -xf $(GCC_ARCHIVE) -C $(SOURCES_DIR)
 
-unpack-musl:
+unpack-musl: ensure-sources
 	@rm -rf $(MUSL_SRC_DIR)
 	@$(TAR) -xf $(MUSL_ARCHIVE) -C $(SOURCES_DIR)
