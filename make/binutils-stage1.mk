@@ -28,7 +28,7 @@ all: binutils-stage1
 .PHONY: binutils-stage1
 binutils-stage1: ensure-dirs $(BINUTILS1_BUILD_DIR)/.built-stage1
 
-$(BINUTILS1_BUILD_DIR)/.built-stage1: $(BINUTILS_ARCHIVE)
+$(BINUTILS1_BUILD_DIR)/.built-stage1: $(BINUTILS_STAMP)
 	$(Q)rm -rf $(BINUTILS1_BUILD_DIR)
 	$(Q)mkdir -p $(BINUTILS1_BUILD_DIR)
 

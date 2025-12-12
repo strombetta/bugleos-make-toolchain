@@ -24,18 +24,18 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 DOWNLOADS_DIR="${DOWNLOADS_DIR:-$ROOT_DIR/downloads}"
 
-sha_of() {
+value_of() {
   local var="$1"
   awk -F':=' -v name="$var" '$1 ~ "^"name"" {gsub(/[ \t]/,"",$2); print $2}' "$ROOT_DIR/config/versions.mk"
 }
 
-BINUTILS_VERSION=$(sha_of BINUTILS_VERSION)
-GCC_VERSION=$(sha_of GCC_VERSION)
-MUSL_VERSION=$(sha_of MUSL_VERSION)
+BINUTILS_VERSION=$(value_of BINUTILS_VERSION)
+GCC_VERSION=$(value_of GCC_VERSION)
+MUSL_VERSION=$(value_of MUSL_VERSION)
 
-BINUTILS_SHA=$(sha_of BINUTILS_SHA256)
-GCC_SHA=$(sha_of GCC_SHA256)
-MUSL_SHA=$(sha_of MUSL_SHA256)
+BINUTILS_SHA=$(value_of BINUTILS_SHA256)
+GCC_SHA=$(value_of GCC_SHA256)
+MUSL_SHA=$(value_of MUSL_SHA256)
 
 ensure_checksum_set() {
   local name="$1"
@@ -46,10 +46,6 @@ ensure_checksum_set() {
     exit 1
   fi
 }
-
-ensure_checksum_set "binutils" "$BINUTILS_SHA"
-ensure_checksum_set "GCC" "$GCC_SHA"
-ensure_checksum_set "musl" "$MUSL_SHA"
 
 SIG_BINUTILS="binutils-${BINUTILS_VERSION}.tar.xz.sig"
 SIG_GCC="gcc-${GCC_VERSION}.tar.xz.sig"
@@ -70,23 +66,6 @@ EOF
   fi
 }
 
-for signature in \
-  "$DOWNLOADS_DIR/$SIG_BINUTILS" \
-  "$DOWNLOADS_DIR/$SIG_GCC" \
-  "$DOWNLOADS_DIR/$SIG_MUSL"; do
-  ensure_file_present "$signature" "signature file"
-done
-
-ensure_file_present "$GNU_KEYRING" "GNU project keyring"
-ensure_file_present "$MUSL_PUBKEY" "musl public key"
-
-for archive in \
-  "$DOWNLOADS_DIR/binutils-${BINUTILS_VERSION}.tar.xz" \
-  "$DOWNLOADS_DIR/gcc-${GCC_VERSION}.tar.xz" \
-  "$DOWNLOADS_DIR/musl-${MUSL_VERSION}.tar.gz"; do
-  ensure_file_present "$archive" "source archive"
-done
-
 GNUPGHOME_TMP=$(mktemp -d)
 cleanup() {
   rm -rf "$GNUPGHOME_TMP"
@@ -95,25 +74,75 @@ trap cleanup EXIT
 
 gpg_common_args=(--homedir "$GNUPGHOME_TMP" --batch --no-tty)
 
-gpg "${gpg_common_args[@]}" --import "$GNU_KEYRING" >/dev/null
-gpg "${gpg_common_args[@]}" --import "$MUSL_PUBKEY" >/dev/null
+import_gnu_keyring() {
+  ensure_file_present "$GNU_KEYRING" "GNU project keyring"
+  gpg "${gpg_common_args[@]}" --import "$GNU_KEYRING" >/dev/null
+}
+
+import_musl_pubkey() {
+  ensure_file_present "$MUSL_PUBKEY" "musl public key"
+  gpg "${gpg_common_args[@]}" --import "$MUSL_PUBKEY" >/dev/null
+}
 
 verify_signature() {
   local sig_file="$1" target_file="$2"
   gpg "${gpg_common_args[@]}" --verify "$DOWNLOADS_DIR/$sig_file" "$DOWNLOADS_DIR/$target_file"
 }
 
-echo "Verifying PGP signatures..."
-verify_signature "$SIG_BINUTILS" "binutils-${BINUTILS_VERSION}.tar.xz"
-verify_signature "$SIG_GCC" "gcc-${GCC_VERSION}.tar.xz"
-verify_signature "$SIG_MUSL" "musl-${MUSL_VERSION}.tar.gz"
-echo "All signatures verified."
+verify_checksum() {
+  local checksum="$1" archive="$2"
+  ( cd "$DOWNLOADS_DIR" && printf '%s  %s\n' "$checksum" "$archive" | sha256sum --quiet -c - )
+}
 
-cat > "$DOWNLOADS_DIR/.checksums" <<EOF_SUMS
-$BINUTILS_SHA  binutils-${BINUTILS_VERSION}.tar.xz
-$GCC_SHA  gcc-${GCC_VERSION}.tar.xz
-$MUSL_SHA  musl-${MUSL_VERSION}.tar.gz
-EOF_SUMS
+verify_binutils() {
+  ensure_checksum_set "binutils" "$BINUTILS_SHA"
+  ensure_file_present "$DOWNLOADS_DIR/$SIG_BINUTILS" "binutils signature file"
+  ensure_file_present "$DOWNLOADS_DIR/binutils-${BINUTILS_VERSION}.tar.xz" "binutils source archive"
+  import_gnu_keyring
+  echo "Verifying binutils signature..."
+  verify_signature "$SIG_BINUTILS" "binutils-${BINUTILS_VERSION}.tar.xz"
+  echo "Verifying binutils checksum..."
+  verify_checksum "$BINUTILS_SHA" "binutils-${BINUTILS_VERSION}.tar.xz"
+}
 
-( cd "$DOWNLOADS_DIR" && sha256sum --quiet -c .checksums )
-echo "All checksums verified."
+verify_gcc() {
+  ensure_checksum_set "GCC" "$GCC_SHA"
+  ensure_file_present "$DOWNLOADS_DIR/$SIG_GCC" "GCC signature file"
+  ensure_file_present "$DOWNLOADS_DIR/gcc-${GCC_VERSION}.tar.xz" "GCC source archive"
+  import_gnu_keyring
+  echo "Verifying GCC signature..."
+  verify_signature "$SIG_GCC" "gcc-${GCC_VERSION}.tar.xz"
+  echo "Verifying GCC checksum..."
+  verify_checksum "$GCC_SHA" "gcc-${GCC_VERSION}.tar.xz"
+}
+
+verify_musl() {
+  ensure_checksum_set "musl" "$MUSL_SHA"
+  ensure_file_present "$DOWNLOADS_DIR/$SIG_MUSL" "musl signature file"
+  ensure_file_present "$DOWNLOADS_DIR/musl-${MUSL_VERSION}.tar.gz" "musl source archive"
+  import_musl_pubkey
+  echo "Verifying musl signature..."
+  verify_signature "$SIG_MUSL" "musl-${MUSL_VERSION}.tar.gz"
+  echo "Verifying musl checksum..."
+  verify_checksum "$MUSL_SHA" "musl-${MUSL_VERSION}.tar.gz"
+}
+
+verify_all() {
+  verify_binutils
+  verify_gcc
+  verify_musl
+}
+
+if [[ $# -eq 0 ]]; then
+  set -- binutils gcc musl
+fi
+
+for component in "$@"; do
+  case "$component" in
+    binutils) verify_binutils ;;
+    gcc) verify_gcc ;;
+    musl) verify_musl ;;
+    all) verify_all ;;
+    *) echo "Unknown component: $component" >&2; exit 1 ;;
+  esac
+done

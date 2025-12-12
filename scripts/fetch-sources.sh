@@ -78,13 +78,40 @@ MUSL_SIG_URL=$(url_of MUSL_SIG_URL)
 GNU_KEYRING_URL=$(url_of GNU_KEYRING_URL)
 MUSL_PUBKEY_URL=$(url_of MUSL_PUBKEY_URL)
 
-fetch "binutils-${BINUTILS_VERSION}.tar.xz" "$(expand_url "$BINUTILS_URL")"
-fetch "binutils-${BINUTILS_VERSION}.tar.xz.sig" "$(expand_url "$BINUTILS_SIG_URL")"
+fetch_binutils() {
+  fetch "binutils-${BINUTILS_VERSION}.tar.xz" "$(expand_url "$BINUTILS_URL")"
+  fetch "binutils-${BINUTILS_VERSION}.tar.xz.sig" "$(expand_url "$BINUTILS_SIG_URL")"
+  fetch "gnu-keyring.gpg" "$(expand_url "$GNU_KEYRING_URL")"
+}
 
-fetch "gcc-${GCC_VERSION}.tar.xz" "$(expand_url "$GCC_URL")"
-fetch "gcc-${GCC_VERSION}.tar.xz.sig" "$(expand_url "$GCC_SIG_URL")"
-fetch "gnu-keyring.gpg" "$(expand_url "$GNU_KEYRING_URL")"
+fetch_gcc() {
+  fetch "gcc-${GCC_VERSION}.tar.xz" "$(expand_url "$GCC_URL")"
+  fetch "gcc-${GCC_VERSION}.tar.xz.sig" "$(expand_url "$GCC_SIG_URL")"
+  fetch "gnu-keyring.gpg" "$(expand_url "$GNU_KEYRING_URL")"
+}
 
-fetch "musl-${MUSL_VERSION}.tar.gz" "$(expand_url "$MUSL_URL")"
-fetch "musl-${MUSL_VERSION}.tar.gz.asc" "$(expand_url "$MUSL_SIG_URL")"
-fetch "musl.pub" "$(expand_url "$MUSL_PUBKEY_URL")"
+fetch_musl() {
+  fetch "musl-${MUSL_VERSION}.tar.gz" "$(expand_url "$MUSL_URL")"
+  fetch "musl-${MUSL_VERSION}.tar.gz.asc" "$(expand_url "$MUSL_SIG_URL")"
+  fetch "musl.pub" "$(expand_url "$MUSL_PUBKEY_URL")"
+}
+
+fetch_all() {
+  fetch_binutils
+  fetch_gcc
+  fetch_musl
+}
+
+if [[ $# -eq 0 ]]; then
+  set -- binutils gcc musl
+fi
+
+for component in "$@"; do
+  case "$component" in
+    binutils) fetch_binutils ;;
+    gcc) fetch_gcc ;;
+    musl) fetch_musl ;;
+    all) fetch_all ;;
+    *) echo "Unknown component: $component" >&2; exit 1 ;;
+  esac
+done

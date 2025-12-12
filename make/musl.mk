@@ -28,7 +28,7 @@ all: musl
 .PHONY: musl
 musl: ensure-dirs $(MUSL_BUILD_DIR)/.built-musl
 
-$(MUSL_BUILD_DIR)/.built-musl: $(MUSL_ARCHIVE)
+$(MUSL_BUILD_DIR)/.built-musl: $(MUSL_STAMP)
 	$(Q)rm -rf $(MUSL_BUILD_DIR)
 	$(Q)mkdir -p $(MUSL_BUILD_DIR)
 
