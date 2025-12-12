@@ -47,10 +47,6 @@ ensure_checksum_set() {
   fi
 }
 
-ensure_checksum_set "binutils" "$BINUTILS_SHA"
-ensure_checksum_set "GCC" "$GCC_SHA"
-ensure_checksum_set "musl" "$MUSL_SHA"
-
 SIG_BINUTILS="binutils-${BINUTILS_VERSION}.tar.xz.sig"
 SIG_GCC="gcc-${GCC_VERSION}.tar.xz.sig"
 SIG_MUSL="musl-${MUSL_VERSION}.tar.gz.asc"
@@ -99,6 +95,7 @@ verify_checksum() {
 }
 
 verify_binutils() {
+  ensure_checksum_set "binutils" "$BINUTILS_SHA"
   ensure_file_present "$DOWNLOADS_DIR/$SIG_BINUTILS" "binutils signature file"
   ensure_file_present "$DOWNLOADS_DIR/binutils-${BINUTILS_VERSION}.tar.xz" "binutils source archive"
   import_gnu_keyring
@@ -109,6 +106,7 @@ verify_binutils() {
 }
 
 verify_gcc() {
+  ensure_checksum_set "GCC" "$GCC_SHA"
   ensure_file_present "$DOWNLOADS_DIR/$SIG_GCC" "GCC signature file"
   ensure_file_present "$DOWNLOADS_DIR/gcc-${GCC_VERSION}.tar.xz" "GCC source archive"
   import_gnu_keyring
@@ -119,6 +117,7 @@ verify_gcc() {
 }
 
 verify_musl() {
+  ensure_checksum_set "musl" "$MUSL_SHA"
   ensure_file_present "$DOWNLOADS_DIR/$SIG_MUSL" "musl signature file"
   ensure_file_present "$DOWNLOADS_DIR/musl-${MUSL_VERSION}.tar.gz" "musl source archive"
   import_musl_pubkey
