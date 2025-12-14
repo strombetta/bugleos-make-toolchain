@@ -72,7 +72,7 @@ BINUTILS2_BUILD_DIR := $(BUILDS_DIR)/binutils-stage2
 
 .PHONY: ensure-dirs
 ensure-dirs:
-        @mkdir -p $(DOWNLOADS_DIR) $(SOURCES_DIR) $(BUILDS_DIR) $(OUT_DIR) $(TOOLCHAIN) $(SYSROOT) $(LOGS_DIR)
+	@mkdir -p $(DOWNLOADS_DIR) $(SOURCES_DIR) $(BUILDS_DIR) $(OUT_DIR) $(TOOLCHAIN) $(SYSROOT) $(LOGS_DIR)
 
 .PHONY: ensure-binutils ensure-gcc ensure-musl
 ensure-binutils: $(BINUTILS_STAMP)
