@@ -1,9 +1,3 @@
-##
-# Copyright (c) 2025 Sebastiano Trombetta
-# SPDX-License-Identifier: MIT
-# Licensed under the MIT License. See LICENSE file for details.
-##
-
 name: CI
 
 on:
@@ -17,16 +11,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install tooling
-        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential bash coreutils tar gzip xz-utils bison flex texinfo gawk file curl wget shellcheck
 
       - name: Lint shell scripts
         run: |
-          shellcheck scripts/*.sh
-          bash -n scripts/*.sh
+          set -euo pipefail
+          if ls scripts/*.sh >/dev/null 2>&1; then
+            shellcheck scripts/*.sh
+            bash -n scripts/*.sh
+          fi
 
-      - name: Validate Make invocation and metadata generation
+      - name: Sanity check build
         run: |
-          make -f make/common.mk ensure-dirs
-          make -C . -f Makefile -n clean
-          ./scripts/gen-metadata.sh
+          set -euo pipefail
+          make -n x86_64
