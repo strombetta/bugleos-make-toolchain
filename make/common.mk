@@ -32,10 +32,20 @@ endif
 
 # $(call do_step, TAG, LABEL, COMMAND, LOGFILE)
 define do_step
-	$(Q)printf "  %-8s %s\n" "$(1)" "$(2)"
-	$(Q){ $(3); } > "$(LOGS_DIR)/$(4).log" 2>&1 || { \
-		printf "  %-8s %s [FAILED] (see %s)\n" "$(1)" "$(2)" "$(LOGS_DIR)/$(4).log"; \
-	exit 1; }
+        $(Q)printf "  %-8s %s\n" "$(1)" "$(2)"
+        $(Q){ $(3); } > "$(LOGS_DIR)/$(4).log" 2>&1 || { \
+                printf "  %-8s %s [FAILED] (see %s)\n" "$(1)" "$(2)" "$(LOGS_DIR)/$(4).log"; \
+        exit 1; }
+endef
+
+# $(call do_download, LABEL, COMMAND, LOGFILE)
+define do_download
+        $(call do_step,DOWNLOAD,$(1),$(2),$(3))
+endef
+
+# $(call do_verify, LABEL, COMMAND, LOGFILE)
+define do_verify
+        $(call do_step,VERIFY,$(1),$(2),$(3))
 endef
 
 # Ensure the previously built toolchain binaries are discoverable for subsequent stages.
@@ -50,7 +60,9 @@ GCC_ARCHIVE := $(DOWNLOADS_DIR)/gcc-$(GCC_VERSION).tar.xz
 GCC_SRC_DIR := $(SOURCES_DIR)/gcc-$(GCC_VERSION)
 MUSL_ARCHIVE := $(DOWNLOADS_DIR)/musl-$(MUSL_VERSION).tar.gz
 MUSL_SRC_DIR := $(SOURCES_DIR)/musl-$(MUSL_VERSION)
-SOURCES_STAMP := $(DOWNLOADS_DIR)/.verified
+BINUTILS_STAMP := $(DOWNLOADS_DIR)/.binutils-$(BINUTILS_VERSION)-verified
+GCC_STAMP := $(DOWNLOADS_DIR)/.gcc-$(GCC_VERSION)-verified
+MUSL_STAMP := $(DOWNLOADS_DIR)/.musl-$(MUSL_VERSION)-verified
 
 # Directory helpers
 BINUTILS1_BUILD_DIR := $(BUILDS_DIR)/binutils-stage1
@@ -62,24 +74,34 @@ BINUTILS2_BUILD_DIR := $(BUILDS_DIR)/binutils-stage2
 ensure-dirs:
 	@mkdir -p $(DOWNLOADS_DIR) $(SOURCES_DIR) $(BUILDS_DIR) $(OUT_DIR) $(TOOLCHAIN) $(SYSROOT) $(LOGS_DIR)
 
-.PHONY: ensure-sources
-ensure-sources: $(SOURCES_STAMP)
+.PHONY: ensure-binutils ensure-gcc ensure-musl
+ensure-binutils: $(BINUTILS_STAMP)
+ensure-gcc: $(GCC_STAMP)
+ensure-musl: $(MUSL_STAMP)
 
-$(SOURCES_STAMP): | ensure-dirs
-	$(Q)$(ROOT_DIR)/scripts/fetch-sources.sh
-	$(Q)$(ROOT_DIR)/scripts/verify-checksums.sh
-	$(Q)touch $@
+$(BINUTILS_STAMP): | ensure-dirs
+        $(call do_download,binutils,$(ROOT_DIR)/scripts/fetch-sources.sh binutils,binutils-download)
+        $(call do_verify,binutils,$(ROOT_DIR)/scripts/verify-checksums.sh binutils,binutils-verify)
+        $(Q)touch $@
 
-$(BINUTILS_ARCHIVE) $(GCC_ARCHIVE) $(MUSL_ARCHIVE): $(SOURCES_STAMP)
+$(GCC_STAMP): | ensure-dirs
+        $(call do_download,gcc,$(ROOT_DIR)/scripts/fetch-sources.sh gcc,gcc-download)
+        $(call do_verify,gcc,$(ROOT_DIR)/scripts/verify-checksums.sh gcc,gcc-verify)
+        $(Q)touch $@
 
-unpack-binutils: ensure-sources
-	@rm -rf $(BINUTILS_SRC_DIR)
-	@$(TAR) -xf $(BINUTILS_ARCHIVE) -C $(SOURCES_DIR)
+$(MUSL_STAMP): | ensure-dirs
+        $(call do_download,musl,$(ROOT_DIR)/scripts/fetch-sources.sh musl,musl-download)
+        $(call do_verify,musl,$(ROOT_DIR)/scripts/verify-checksums.sh musl,musl-verify)
+        $(Q)touch $@
 
-unpack-gcc: ensure-sources
-	@rm -rf $(GCC_SRC_DIR)
-	@$(TAR) -xf $(GCC_ARCHIVE) -C $(SOURCES_DIR)
+unpack-binutils: ensure-binutils
+        @rm -rf $(BINUTILS_SRC_DIR)
+        @$(TAR) -xf $(BINUTILS_ARCHIVE) -C $(SOURCES_DIR)
 
-unpack-musl: ensure-sources
-	@rm -rf $(MUSL_SRC_DIR)
-	@$(TAR) -xf $(MUSL_ARCHIVE) -C $(SOURCES_DIR)
+unpack-gcc: ensure-gcc
+        @rm -rf $(GCC_SRC_DIR)
+        @$(TAR) -xf $(GCC_ARCHIVE) -C $(SOURCES_DIR)
+
+unpack-musl: ensure-musl
+        @rm -rf $(MUSL_SRC_DIR)
+        @$(TAR) -xf $(MUSL_ARCHIVE) -C $(SOURCES_DIR)

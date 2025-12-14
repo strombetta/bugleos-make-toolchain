@@ -30,7 +30,7 @@ all: gcc-stage2
 .PHONY: gcc-stage2
 gcc-stage2: ensure-dirs $(GCC_BUILD_DIR)/.built-gcc-stage2
 
-$(GCC_BUILD_DIR)/.built-gcc-stage2: $(GCC_ARCHIVE)
+$(GCC_BUILD_DIR)/.built-gcc-stage2: $(GCC_STAMP)
 	$(Q)rm -rf $(GCC_BUILD_DIR)
 	$(Q)mkdir -p $(GCC_BUILD_DIR)
 

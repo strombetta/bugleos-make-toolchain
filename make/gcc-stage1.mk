@@ -28,7 +28,7 @@ all: gcc-stage1
 .PHONY: gcc-stage1
 gcc-stage1: ensure-dirs $(GCC_BUILD_DIR)/.built-stage1
 
-$(GCC_BUILD_DIR)/.built-stage1: $(GCC_ARCHIVE)
+$(GCC_BUILD_DIR)/.built-stage1: $(GCC_STAMP)
 	$(Q)rm -rf $(GCC_BUILD_DIR)
 	$(Q)mkdir -p $(GCC_BUILD_DIR)
 
