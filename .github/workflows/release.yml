@@ -100,7 +100,12 @@ jobs:
         run: |
           set -euo pipefail
           cd dist
-          sha256sum bugleos-toolchain-*.tar.gz > SHA256SUMS
+          tarballs=$(find . -type f -name 'bugleos-toolchain-*.tar.gz' -print)
+          if [ -z "$tarballs" ]; then
+            echo "No toolchain tarballs found for checksum generation" >&2
+            exit 1
+          fi
+          printf '%s\n' "$tarballs" | sort | xargs sha256sum > SHA256SUMS
 
       - name: Install minisign
         run: |
