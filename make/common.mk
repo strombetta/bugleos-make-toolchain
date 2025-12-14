@@ -80,28 +80,28 @@ ensure-gcc: $(GCC_STAMP)
 ensure-musl: $(MUSL_STAMP)
 
 $(BINUTILS_STAMP): | ensure-dirs
-        $(call do_download,binutils,$(ROOT_DIR)/scripts/fetch-sources.sh binutils,binutils-download)
-        $(call do_verify,binutils,$(ROOT_DIR)/scripts/verify-checksums.sh binutils,binutils-verify)
-        $(Q)touch $@
+	$(call do_download,binutils,$(ROOT_DIR)/scripts/fetch-sources.sh binutils,binutils-download)
+	$(call do_verify,binutils,$(ROOT_DIR)/scripts/verify-checksums.sh binutils,binutils-verify)
+	$(Q)touch $@
 
 $(GCC_STAMP): | ensure-dirs
-        $(call do_download,gcc,$(ROOT_DIR)/scripts/fetch-sources.sh gcc,gcc-download)
-        $(call do_verify,gcc,$(ROOT_DIR)/scripts/verify-checksums.sh gcc,gcc-verify)
-        $(Q)touch $@
+	$(call do_download,gcc,$(ROOT_DIR)/scripts/fetch-sources.sh gcc,gcc-download)
+	$(call do_verify,gcc,$(ROOT_DIR)/scripts/verify-checksums.sh gcc,gcc-verify)
+	$(Q)touch $@
 
 $(MUSL_STAMP): | ensure-dirs
-        $(call do_download,musl,$(ROOT_DIR)/scripts/fetch-sources.sh musl,musl-download)
-        $(call do_verify,musl,$(ROOT_DIR)/scripts/verify-checksums.sh musl,musl-verify)
-        $(Q)touch $@
+	$(call do_download,musl,$(ROOT_DIR)/scripts/fetch-sources.sh musl,musl-download)
+	$(call do_verify,musl,$(ROOT_DIR)/scripts/verify-checksums.sh musl,musl-verify)
+	$(Q)touch $@
 
 unpack-binutils: ensure-binutils
-        @rm -rf $(BINUTILS_SRC_DIR)
-        @$(TAR) -xf $(BINUTILS_ARCHIVE) -C $(SOURCES_DIR)
+	@rm -rf $(BINUTILS_SRC_DIR)
+	@$(TAR) -xf $(BINUTILS_ARCHIVE) -C $(SOURCES_DIR)
 
 unpack-gcc: ensure-gcc
-        @rm -rf $(GCC_SRC_DIR)
-        @$(TAR) -xf $(GCC_ARCHIVE) -C $(SOURCES_DIR)
+	@rm -rf $(GCC_SRC_DIR)
+	@$(TAR) -xf $(GCC_ARCHIVE) -C $(SOURCES_DIR)
 
 unpack-musl: ensure-musl
-        @rm -rf $(MUSL_SRC_DIR)
-        @$(TAR) -xf $(MUSL_ARCHIVE) -C $(SOURCES_DIR)
+	@rm -rf $(MUSL_SRC_DIR)
+	@$(TAR) -xf $(MUSL_ARCHIVE) -C $(SOURCES_DIR)
