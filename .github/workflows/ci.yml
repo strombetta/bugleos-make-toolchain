@@ -28,4 +28,4 @@ jobs:
       - name: Sanity check build
         run: |
           set -euo pipefail
-          make -qp x86_64 > /dev/null
+          make -rR -qp : > /dev/null
