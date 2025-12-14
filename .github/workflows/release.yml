@@ -1,0 +1,187 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    name: Build ${{ matrix.arch }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - arch: x86_64
+            target: x86_64
+            triple: x86_64-bugleos-linux-musl
+            label: x86_64
+          - arch: aarch64
+            target: aarch64
+            triple: aarch64-bugleos-linux-musl
+            label: arm64
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate tag format
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_REF}" =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Tag format valid"
+          else
+            echo "Tag ${GITHUB_REF} is not a valid SemVer tag (vMAJOR.MINOR.PATCH[-prerelease])." >&2
+            exit 1
+          fi
+          echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential bash coreutils tar gzip xz-utils bison flex texinfo gawk file curl wget gpg \
+            libgmp-dev libmpfr-dev libmpc-dev python3
+
+      - name: Fetch sources
+        run: |
+          set -euo pipefail
+          ./scripts/fetch-sources.sh
+
+      - name: Verify checksums
+        run: |
+          set -euo pipefail
+          ./scripts/verify-checksums.sh
+
+      - name: Build ${{ matrix.arch }} toolchain
+        run: |
+          set -euo pipefail
+          make ${{ matrix.target }}
+
+      - name: Package artifacts
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          version="${VERSION}"
+          triple="${{ matrix.triple }}"
+          label="${{ matrix.label }}"
+          tarball="bugleos-toolchain-${version}-${label}.tar.gz"
+          include_paths=("out/toolchain/${triple}")
+          if [ -d "out/sysroot/${triple}" ]; then
+            include_paths+=("out/sysroot/${triple}")
+          fi
+          tar -czf "dist/${tarball}" "${include_paths[@]}"
+          echo "TARBALL_PATH=dist/${tarball}" >> "$GITHUB_ENV"
+
+      - name: Upload tarball artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.label }}-tarball
+          path: dist/bugleos-toolchain-${{ env.VERSION }}-${{ matrix.label }}.tar.gz
+          if-no-files-found: error
+
+  checksums:
+    name: Checksums and signatures
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: read
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Create SHA256SUMS
+        run: |
+          set -euo pipefail
+          cd dist
+          tarballs=$(find . -type f -name 'bugleos-toolchain-*.tar.gz' -print)
+          if [ -z "$tarballs" ]; then
+            echo "No toolchain tarballs found for checksum generation" >&2
+            exit 1
+          fi
+          printf '%s\n' "$tarballs" | sort | xargs sha256sum > SHA256SUMS
+
+      - name: Install minisign
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y minisign
+
+      - name: Sign checksums
+        env:
+          MINISIGN_SECRET_KEY_B64: ${{ secrets.MINISIGN_SECRET_KEY_B64 }}
+          MINISIGN_PUBLIC_KEY: ${{ secrets.MINISIGN_PUBLIC_KEY }}
+        run: |
+          set -euo pipefail
+          cd dist
+          if [ -z "${MINISIGN_SECRET_KEY_B64:-}" ]; then
+            echo "MINISIGN_SECRET_KEY_B64 is required" >&2
+            exit 1
+          fi
+          echo "${MINISIGN_SECRET_KEY_B64}" | base64 -d > secret.key
+          chmod 600 secret.key
+          minisign -S -s secret.key -m SHA256SUMS
+          if [ -n "${MINISIGN_PUBLIC_KEY:-}" ]; then
+            echo "${MINISIGN_PUBLIC_KEY}" > minisign.pub
+          fi
+          rm -f secret.key
+
+      - name: Upload checksum artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-checksums
+          path: |
+            dist/SHA256SUMS
+            dist/SHA256SUMS.minisig
+            dist/minisign.pub
+          if-no-files-found: error
+
+  publish:
+    name: Publish Release
+    runs-on: ubuntu-latest
+    needs: checksums
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Determine version metadata
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          echo "VERSION=${version}" >> "$GITHUB_ENV"
+          if [[ "${GITHUB_REF_NAME}" == *-* ]]; then
+            echo "PRERELEASE=true" >> "$GITHUB_ENV"
+          else
+            echo "PRERELEASE=false" >> "$GITHUB_ENV"
+          fi
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: BugleOS Toolchain ${{ env.VERSION }}
+          tag_name: ${{ github.ref_name }}
+          draft: false
+          prerelease: ${{ env.PRERELEASE }}
+          body: |
+            Supported architectures: x86_64, arm64
+
+            Verification:
+            ```
+            minisign -Vm SHA256SUMS -P "${{ secrets.MINISIGN_PUBLIC_KEY }}"
+            sha256sum -c SHA256SUMS
+            ```
+          files: |
+            dist/**/bugleos-toolchain-${{ env.VERSION }}-x86_64.tar.gz
+            dist/**/bugleos-toolchain-${{ env.VERSION }}-arm64.tar.gz
+            dist/**/SHA256SUMS
+            dist/**/SHA256SUMS.minisig
+            dist/**/minisign.pub
