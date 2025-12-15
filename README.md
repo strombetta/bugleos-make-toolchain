@@ -1,7 +1,8 @@
-# BugleOS Toolchain
-
-BugleOS Toolchain builds deterministic cross-compilers and system headers for BugleOS across multiple architectures. The repository automates fetching sources, verifying checksums, and orchestrating staged builds of binutils, GCC, and musl.
+# BugleOS Cross Toolchain
 [![Release](https://github.com/strombetta/bugleos-make-toolchain/actions/workflows/release.yml/badge.svg)](https://github.com/strombetta/bugleos-make-toolchain/actions/workflows/release.yml)
+
+## The Repository
+BugleOS Cross Toolchain builds deterministic cross-compilers and system headers for BugleOS across multiple architectures. The repository automates fetching sources, verifying checksums, and orchestrating staged builds of binutils, GCC, and musl.
 
 ## Repository layout
 
@@ -63,7 +64,9 @@ TARGET=x86_64-bugleos-linux-musl scripts/enter-env.sh
 
 ## Continuous Integration
 
-GitHub Actions runs shell linting and basic Makefile sanity checks on every push and pull request. The workflow lives in `.github/workflows/ci.yml` and ensures scripts remain syntactically correct while metadata generation stays functional.
-
-# License
+## Feedback
+## Releated Projects
+## Code of Conduct
+## License
+Copyright (C) Sebastiano Trombetta. All rights reserved.
 This project is licensed under the MIT License. For the full text of the license, see the link:LICENSE[LICENSE] file.
