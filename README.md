@@ -1,6 +1,7 @@
 # BugleOS Toolchain
 
 BugleOS Toolchain builds deterministic cross-compilers and system headers for BugleOS across multiple architectures. The repository automates fetching sources, verifying checksums, and orchestrating staged builds of binutils, GCC, and musl.
+[![Release](https://github.com/strombetta/bugleos-make-toolchain/actions/workflows/release.yml/badge.svg)](https://github.com/strombetta/bugleos-make-toolchain/actions/workflows/release.yml)
 
 ## Repository layout
 
