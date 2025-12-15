@@ -27,7 +27,7 @@ MAKEFLAGS += --no-print-directory
 ARCHES := aarch64 x86_64
 load_target = $(strip $(shell awk -F':=' '/^TARGET/ {gsub(/[ \t]/,"",$$2);print $$2}' config/arch/$(1).mk))
 
-.PHONY: $(ARCHES) toolchain binutils-stage1 gcc-stage1 musl binutils-stage2 gcc-stage2 metadata clean distclean check help
+.PHONY: $(ARCHES) toolchain binutils-stage1 gcc-stage1 musl binutils-stage2 gcc-stage2 metadata clean distclean check help sanity
 
 help:
 	@echo "BugleOS Cross-toolchain builder"
@@ -79,3 +79,6 @@ check: guard-TARGET
 	@$(TARGET)-gcc /tmp/bugleos-hello.c -o /tmp/bugleos-hello || { echo "ERROR: failed to build test program"; exit 1; }
 	@echo "[BugleOS] Toolchain for $(TARGET) seems OK"
 	@rm -f /tmp/bugleos-hello.c /tmp/bugleos-hello
+
+sanity:
+	@true
