@@ -43,7 +43,7 @@ $(GCC_BUILD_DIR)/.built-stage1: $(GCC_STAMP)
 	$(call do_step,CONFIG,gcc-stage1, \
 		cd $(GCC_BUILD_DIR) && $(GCC_SRC_DIR)/configure \
 			--target=$(TARGET) \
-			--prefix=$(TOOLCHAIN) \
+			--prefix=$(TOOLCHAIN_ROOT) \
 			--with-sysroot=$(SYSROOT) \
 			--with-newlib \
 			--with-native-system-header-dir=/usr/include \

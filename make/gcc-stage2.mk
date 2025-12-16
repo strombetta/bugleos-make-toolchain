@@ -44,19 +44,19 @@ $(GCC_BUILD_DIR)/.built-gcc-stage2: $(GCC_STAMP)
 
 	$(call do_step,CONFIG,gcc-stage2, \
 		cd $(GCC_BUILD_DIR) && $(GCC_SRC_DIR)/configure \
-		    --target=$(TARGET) \
-		    --prefix=$(TOOLCHAIN) \
-		    --with-sysroot=$(SYSROOT) \
-			 --with-native-system-header-dir=/usr/include \
-		    --enable-languages=c$(COMMA)c++ \
-		    --disable-nls \
-		    --disable-multilib \
-		    --disable-libsanitizer \
-		    --disable-libitm \
-			 --disable-libstdcxx-backtrace \
-		    --enable-checking=release \
-		    --enable-threads=posix, \
-			gcc-stage2-configure)
+		   --target=$(TARGET) \
+		   --prefix=$(TOOLCHAIN_ROOT) \
+		   --with-sysroot=$(SYSROOT) \
+		   --with-native-system-header-dir=/usr/include \
+		   --enable-languages=c$(COMMA)c++ \
+		   --disable-nls \
+		   --disable-multilib \
+		   --disable-libsanitizer \
+		   --disable-libitm \
+		   --disable-libstdcxx-backtrace \
+		   --enable-checking=release \
+		   --enable-threads=posix, \
+		   gcc-stage2-configure)
 
 	$(call do_step,BUILD,gcc-stage2, \
 		$(MAKE) -C $(GCC_BUILD_DIR) -j$(JOBS), \

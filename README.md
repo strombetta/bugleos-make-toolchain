@@ -45,7 +45,7 @@ make TARGET=aarch64-bugleos-linux-musl toolchain
 
 ## Using the toolchain environment
 
-After a successful build, load the environment helpers generated in `out/toolchain/<triple>`:
+After a successful build, load the environment helpers generated in `out/toolchain/<triple>` (where `TOOLCHAIN_ROOT` defaults to `out/toolchain`):
 
 ```
 source out/toolchain/x86_64-bugleos-linux-musl/bugleos-toolchain.env
