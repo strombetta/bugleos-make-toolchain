@@ -49,7 +49,10 @@ define do_verify
 endef
 
 # Ensure the previously built toolchain binaries are discoverable for subsequent stages.
-export PATH := $(TOOLCHAIN)/bin:$(PATH)
+# Binutils/GCC installed with --prefix=$(TOOLCHAIN_ROOT) place cross-prefixed binaries in
+# $(TOOLCHAIN_ROOT)/bin, while some packages may still drop helpers under
+# $(TOOLCHAIN_ROOT)/$(TARGET)/bin. Include both to keep the toolchain visible.
+export PATH := $(TOOLCHAIN_ROOT)/bin:$(TOOLCHAIN_ROOT)/$(TARGET)/bin:$(PATH)
 
 HOST ?= $(shell uname -m)-unknown-linux-gnu
 PKGDIR ?= $(ROOT_DIR)/patches
@@ -72,7 +75,7 @@ BINUTILS2_BUILD_DIR := $(BUILDS_DIR)/binutils-stage2
 
 .PHONY: ensure-dirs
 ensure-dirs:
-	@mkdir -p $(DOWNLOADS_DIR) $(SOURCES_DIR) $(BUILDS_DIR) $(OUT_DIR) $(TOOLCHAIN) $(SYSROOT) $(LOGS_DIR)
+	@mkdir -p $(DOWNLOADS_DIR) $(SOURCES_DIR) $(BUILDS_DIR) $(OUT_DIR) $(TOOLCHAIN_ROOT) $(SYSROOT) $(LOGS_DIR)
 
 .PHONY: ensure-binutils ensure-gcc ensure-musl
 ensure-binutils: $(BINUTILS_STAMP)

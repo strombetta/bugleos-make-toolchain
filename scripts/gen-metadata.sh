@@ -9,7 +9,8 @@ set -euo pipefail
 ROOT_DIR="${ROOT_DIR:-$(cd "$(dirname "$0")/.." && pwd)}"
 TARGET="${TARGET:-x86_64-bugleos-linux-musl}"
 SYSROOT="${SYSROOT:-$ROOT_DIR/out/sysroot/$TARGET}"
-TOOLCHAIN="${TOOLCHAIN:-$ROOT_DIR/out/toolchain/$TARGET}"
+TOOLCHAIN_ROOT="${TOOLCHAIN_ROOT:-$ROOT_DIR/out/toolchain}"
+TOOLCHAIN="${TOOLCHAIN:-$TOOLCHAIN_ROOT/$TARGET}"
 VERSIONS_MK="$ROOT_DIR/config/versions.mk"
 
 version_of() {
@@ -34,8 +35,9 @@ cat > "$ENV_FILE" <<EOF_ENV
 # Generated BugleOS toolchain environment
 export TARGET="$TARGET"
 export SYSROOT="$SYSROOT"
+export TOOLCHAIN_ROOT="$TOOLCHAIN_ROOT"
 export TOOLCHAIN="$TOOLCHAIN"
-export PATH="$TOOLCHAIN/bin:${PATH}"
+export PATH="$TOOLCHAIN_ROOT/bin:$TOOLCHAIN_ROOT/$TARGET/bin:${PATH}"
 
 export BUGLEOS_BINUTILS_VERSION="$BINUTILS_VERSION"
 export BUGLEOS_GCC_STAGE1_VERSION="$GCC_STAGE1_VERSION"
@@ -49,6 +51,7 @@ cat > "$JSON_FILE" <<EOF_JSON
 {
   "target": "$TARGET",
   "sysroot": "$SYSROOT",
+  "toolchain_root": "$TOOLCHAIN_ROOT",
   "toolchain_dir": "$TOOLCHAIN",
   "binutils_version": "$BINUTILS_VERSION",
   "gcc_stage1_version": "$GCC_STAGE1_VERSION",

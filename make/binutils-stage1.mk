@@ -39,7 +39,7 @@ $(BINUTILS1_BUILD_DIR)/.built-stage1: $(BINUTILS_STAMP)
 	$(call do_step,CONFIG,binutils-stage1, \
 		cd $(BINUTILS1_BUILD_DIR) && $(BINUTILS_SRC_DIR)/configure \
 		--target=$(TARGET) \
-		--prefix=$(TOOLCHAIN) \
+		--prefix=$(TOOLCHAIN_ROOT) \
 		--with-sysroot=$(SYSROOT) \
 		--disable-nls \
 		--disable-werror \
