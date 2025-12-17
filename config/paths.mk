@@ -33,11 +33,14 @@ HOST_TARGET := $(shell \
   elif [ "$$arch" = "aarch64" ] || [ "$$arch" = "arm64" ]; then echo aarch64-bugleos-linux-musl; \
   else echo; \
   fi)
-
 TARGET      ?= $(if $(HOST_TARGET),$(HOST_TARGET),$(error Unsupported host architecture '$(HOST_ARCH)'; please set TARGET explicitly))
 TARGET_ARCH := $(firstword $(subst -, ,$(TARGET)))
-
 MUSL_LDSO   := ld-musl-$(TARGET_ARCH).so.1
+
+# PATH baseline (host tools)
+HOST_PATH := /usr/bin:/bin:$(PATH)
+# PATH to discover cross tools (prefixed) when needed
+CROSS_PATH := $(TOOLCHAIN_ROOT)/bin:$(TOOLCHAIN_ROOT)/$(TARGET)/bin:$(STAGE1_TOOLCHAIN_ROOT)/bin:$(STAGE1_TOOLCHAIN_ROOT)/$(TARGET)/bin
 
 
 TOOLCHAIN_ROOT ?= $(OUT_DIR)/toolchain
