@@ -48,6 +48,7 @@ $(MUSL_BUILD_DIR)/.built-musl: $(MUSL_STAMP)
 		musl-configure)
 
 	$(call do_step,INSTALL,musl-headers, \
+		PATH="$(STAGE1_TOOLCHAIN_ROOT)/bin:$$PATH" && \
 		$(MAKE) -C "$(MUSL_BUILD_DIR)" DESTDIR="$(SYSROOT)" install-headers, \
 		musl-headers)
 
