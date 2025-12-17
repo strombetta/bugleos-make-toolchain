@@ -41,12 +41,12 @@ $(GCC_BUILD_DIR)/.built-stage1: $(GCC_STAMP)
 		gcc-stage1-prereqs)
 
 	$(call do_step,CONFIG,gcc-stage1, \
-		cd $(GCC_BUILD_DIR) && $(GCC_SRC_DIR)/configure \
-			--target=$(TARGET) \
-			--prefix=$(TOOLCHAIN_ROOT) \
-			--with-sysroot=$(SYSROOT) \
+		PATH="/usr/bin:/bin:$$PATH" && \
+		cd "$(GCC_BUILD_DIR)" && "$(GCC_SRC_DIR)/configure" \
+			--target="$(TARGET)" \
+			--prefix="$(STAGE1_TOOLCHAIN_ROOT)" \
+			--with-sysroot="$(STAGE1_SYSROOT)" \
 			--with-newlib \
-			--with-native-system-header-dir=/usr/include \
 			--without-headers \
 			--disable-nls \
 			--disable-shared \
@@ -60,8 +60,17 @@ $(GCC_BUILD_DIR)/.built-stage1: $(GCC_STAMP)
 			--disable-libvtv \
 			--disable-multilib \
 			--enable-languages=c \
-			--enable-checking=release, \
-			gcc-stage1-configure)
+			--enable-checking=release \
+			AR_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-ar" \
+			AS_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-as" \
+			LD_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-ld" \
+			NM_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-nm" \
+			OBJCOPY_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-objcopy" \
+			OBJDUMP_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-objdump" \
+			RANLIB_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-ranlib" \
+			READELF_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-readelf" \
+			STRIP_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-strip", \
+		gcc-stage1-configure)
 
 	$(call do_step,BUILD,gcc-stage1, \
 		PATH="$(STAGE1_TOOLCHAIN_ROOT)/bin:$$PATH" && \
