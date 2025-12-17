@@ -51,14 +51,14 @@ define do_verify
 	$(call do_step,VERIFY,$(1),$(2),$(3))
 endef
 
-# $(call with_host_env, COMMAND)
+# $(call with_host_env, COMMAND) Host-only, deterministic PATH
 define with_host_env
-	env PATH="/usr/bin:/bin:$(PATH)" $(1)
+	env -i HOME="$$HOME" PATH="/usr/bin:/bin" $(1)
 endef
 
-# $(call with_cross_env, COMMAND)
+# $(call with_cross_env, COMMAND) Cross-enabled, deterministic PATH (host first, then your toolchains)
 define with_cross_env
-	env PATH="/usr/bin:/bin:$(PATH):$(TOOLCHAIN_ROOT)/bin:$(TOOLCHAIN_ROOT)/$(TARGET)/bin:$(STAGE1_TOOLCHAIN_ROOT)/bin:$(STAGE1_TOOLCHAIN_ROOT)/$(TARGET)/bin" $(1)
+	env -i HOME="$$HOME" PATH="/usr/bin:/bin:$(TOOLCHAIN_ROOT)/bin:$(TOOLCHAIN_ROOT)/$(TARGET)/bin:$(STAGE1_TOOLCHAIN_ROOT)/bin:$(STAGE1_TOOLCHAIN_ROOT)/$(TARGET)/bin" $(1)
 endef
 
 # PATH baseline (host tools)
