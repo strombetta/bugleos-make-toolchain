@@ -51,6 +51,10 @@ After a successful build, load the environment helpers generated in `out/toolcha
 source out/toolchain/x86_64-bugleos-linux-musl/bugleos-toolchain.env
 ```
 
+Bootstrap tools (binutils-stage1 and gcc-stage1) install into `out/toolchain-stage1/<triple>`, keeping temporary artifacts separate from the final cross-toolchain under `out/toolchain/<triple>`. Only the latter is required to build BugleOS userspace or kernels.
+
+Stage1 sysroot contents live under `out/sysroot-stage1/<triple>`, while the final sysroot is colocated with the deliverable toolchain at `out/toolchain/<triple>/sysroot`.
+
 Alternatively, enter the environment manually:
 
 ```

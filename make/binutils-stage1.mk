@@ -37,14 +37,14 @@ $(BINUTILS1_BUILD_DIR)/.built-stage1: $(BINUTILS_STAMP)
 		binutils-stage1-extract)
 
 	$(call do_step,CONFIG,binutils-stage1, \
-		cd $(BINUTILS1_BUILD_DIR) && $(BINUTILS_SRC_DIR)/configure \
-		--target=$(TARGET) \
-		--prefix=$(TOOLCHAIN_ROOT) \
-		--with-sysroot=$(SYSROOT) \
-		--disable-nls \
-		--disable-werror \
-		--enable-deterministic-archives, \
-		binutils-stage1-configure)
+	cd $(BINUTILS1_BUILD_DIR) && $(BINUTILS_SRC_DIR)/configure \
+	--target=$(TARGET) \
+	--prefix=$(STAGE1_TOOLCHAIN_ROOT) \
+	--with-sysroot=$(STAGE1_SYSROOT) \
+	--disable-nls \
+	--disable-werror \
+	--enable-deterministic-archives, \
+	binutils-stage1-configure)
 
 	$(call do_step,BUILD,binutils-stage1, \
 		$(MAKE) -C "$(BINUTILS1_BUILD_DIR)" -j"$(JOBS)", \

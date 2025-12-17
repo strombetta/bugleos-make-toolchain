@@ -38,7 +38,10 @@ TARGET ?= $(if $(HOST_TARGET),$(HOST_TARGET),$(error Unsupported host architectu
 
 TOOLCHAIN_ROOT ?= $(OUT_DIR)/toolchain
 TOOLCHAIN ?= $(TOOLCHAIN_ROOT)/$(TARGET)
-SYSROOT ?= $(OUT_DIR)/sysroot/$(TARGET)
+STAGE1_TOOLCHAIN_ROOT ?= $(OUT_DIR)/toolchain-stage1
+STAGE1_TOOLCHAIN ?= $(STAGE1_TOOLCHAIN_ROOT)/$(TARGET)
+STAGE1_SYSROOT ?= $(OUT_DIR)/sysroot-stage1/$(TARGET)
+SYSROOT ?= $(TOOLCHAIN)/sysroot
 
 JOBS ?= $(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
 
