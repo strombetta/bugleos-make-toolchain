@@ -43,10 +43,12 @@ $(GCC_BUILD_DIR)/.built-gcc-stage2: $(GCC_STAMP)
 		gcc-stage2-prereqs)
 
 	$(call do_step,CONFIG,gcc-stage2, \
+		PATH="$(TOOLCHAIN_ROOT)/bin:$$PATH" && \
       cd $(GCC_BUILD_DIR) && $(GCC_SRC_DIR)/configure \
 		--target=$(TARGET) \
 		--prefix=$(TOOLCHAIN_ROOT) \
 		--with-sysroot=$(SYSROOT) \
+		--with-native-system-header-dir=/usr/include \
 		--enable-languages=c$(COMMA)c++ \
 		--disable-nls \
 		--disable-multilib \
@@ -58,11 +60,34 @@ $(GCC_BUILD_DIR)/.built-gcc-stage2: $(GCC_STAMP)
 		gcc-stage2-configure)
 
 	$(call do_step,BUILD,gcc-stage2, \
+		PATH="$(TOOLCHAIN_ROOT)/bin:$$PATH" && \
 		$(MAKE) -C $(GCC_BUILD_DIR) -j$(JOBS), \
 		gcc-stage2-build)
 	
 	$(call do_step,INSTALL,gcc-stage2, \
 		$(MAKE) -C $(GCC_BUILD_DIR) install, \
 		gcc-stage2-install)
+
+		$(call do_step,CHECK,gcc-stage2, \
+		sh -eu -c '\
+			test -x "$(TOOLCHAIN_ROOT)/bin/$(TARGET)-gcc"; \
+			test -x "$(TOOLCHAIN_ROOT)/bin/$(TARGET)-g++"; \
+			test -x "$(TOOLCHAIN_ROOT)/bin/$(TARGET)-ld"; \
+			test -x "$(TOOLCHAIN_ROOT)/bin/$(TARGET)-readelf"; \
+			"$(TOOLCHAIN_ROOT)/bin/$(TARGET)-gcc" -dumpmachine | grep -qx "$(TARGET)"; \
+			"$(TOOLCHAIN_ROOT)/bin/$(TARGET)-gcc" --print-sysroot | grep -qx "$(SYSROOT)"; \
+			\
+			printf "%s\n" \
+				"#include <stdio.h>" \
+				"int main(void){ puts(\"toolchain-ok\"); return 0; }" \
+				> /tmp/gcc-stage2-check.c; \
+			\
+			PATH="$(TOOLCHAIN_ROOT)/bin:$$PATH" \
+				"$(TOOLCHAIN_ROOT)/bin/$(TARGET)-gcc" -o /tmp/gcc-stage2-check /tmp/gcc-stage2-check.c; \
+			\
+			"$(TOOLCHAIN_ROOT)/bin/$(TARGET)-readelf" -l /tmp/gcc-stage2-check | grep -q "$(MUSL_LDSO)"; \
+			! "$(TOOLCHAIN_ROOT)/bin/$(TARGET)-readelf" -l /tmp/gcc-stage2-check | grep -q "ld-linux"; \
+			rm -f /tmp/gcc-stage2-check.c /tmp/gcc-stage2-check', \
+		gcc-stage2-check)
 	
 	$(Q)touch $@
