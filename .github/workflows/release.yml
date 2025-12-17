@@ -44,7 +44,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            build-essential bash coreutils tar gzip xz-utils bison flex texinfo gawk file curl wget gpg \
+            build-essential binutils bash coreutils tar gzip xz-utils bison flex texinfo gawk file curl wget gpg \
             libgmp-dev libmpfr-dev libmpc-dev python3
 
       - name: Fetch sources
