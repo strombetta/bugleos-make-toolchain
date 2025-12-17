@@ -37,7 +37,7 @@ $(BINUTILS1_BUILD_DIR)/.built-stage1: $(BINUTILS_STAMP)
 		binutils-stage1-extract)
 
 	$(call do_step,CONFIG,binutils-stage1, \
-		$(call with_cross_env, cd "$(BINUTILS1_BUILD_DIR)" && "$(BINUTILS_SRC_DIR)/configure" \
+		$(call with_host_env, cd "$(BINUTILS1_BUILD_DIR)" && "$(BINUTILS_SRC_DIR)/configure" \
 			--target="$(TARGET)" \
 			--prefix="$(STAGE1_TOOLCHAIN_ROOT)" \
 			--with-sysroot="$(STAGE1_SYSROOT)" \
@@ -47,11 +47,11 @@ $(BINUTILS1_BUILD_DIR)/.built-stage1: $(BINUTILS_STAMP)
 		binutils-stage1-configure)
 
 	$(call do_step,BUILD,binutils-stage1, \
-		$(call with_cross_env, $(MAKE) -C "$(BINUTILS1_BUILD_DIR)" -j"$(JOBS)"), \
+		$(call with_host_env, $(MAKE) -C "$(BINUTILS1_BUILD_DIR)" -j"$(JOBS)"), \
 		binutils-stage1-build)
 
 	$(call do_step,INSTALL,binutils-stage1, \
-		$(call with_cross_env, $(MAKE) -C "$(BINUTILS1_BUILD_DIR)" install), \
+		$(call with_host_env, $(MAKE) -C "$(BINUTILS1_BUILD_DIR)" install), \
 		binutils-stage1-install)
 
 	$(call do_step,CHECK,binutils-stage1, \
