@@ -38,6 +38,18 @@ define do_step
 	exit 1; }
 endef
 
+# Run a command with a clean host PATH (no cross contamination)
+# Usage: $(call with_host_env, <command>)
+define with_host_env
+	env PATH="$(HOST_PATH)" $(1)
+endef
+
+# Run a command with cross tools available (but still host tools first)
+# Usage: $(call with_cross_env, <command>)
+define with_cross_env
+	env PATH="$(HOST_PATH):$(CROSS_PATH)" $(1)
+endef
+
 # $(call do_download, LABEL, COMMAND, LOGFILE)
 define do_download
 	$(call do_step,DOWNLOAD,$(1),$(2),$(3))
@@ -48,12 +60,10 @@ define do_verify
 	$(call do_step,VERIFY,$(1),$(2),$(3))
 endef
 
-# Ensure the previously built toolchain binaries are discoverable for subsequent stages.
-# Final outputs live under $(TOOLCHAIN_ROOT), while bootstrap bits are kept in
-# $(STAGE1_TOOLCHAIN_ROOT) to avoid mixing temporary artifacts with the final toolchain.
-# Binutils/GCC install cross-prefixed binaries in both <prefix>/bin and
-# <prefix>/<TARGET>/bin, so include both locations for stage1 and stage2.
-export PATH := $(TOOLCHAIN_ROOT)/bin:$(TOOLCHAIN_ROOT)/$(TARGET)/bin:$(STAGE1_TOOLCHAIN_ROOT)/bin:$(STAGE1_TOOLCHAIN_ROOT)/$(TARGET)/bin:$(PATH)
+# PATH baseline (host tools)
+HOST_PATH := /usr/bin:/bin:$(PATH)
+# PATH to discover cross tools (prefixed) when needed
+CROSS_PATH := $(TOOLCHAIN_ROOT)/bin:$(TOOLCHAIN_ROOT)/$(TARGET)/bin:$(STAGE1_TOOLCHAIN_ROOT)/bin:$(STAGE1_TOOLCHAIN_ROOT)/$(TARGET)/bin
 
 HOST ?= $(shell uname -m)-unknown-linux-gnu
 PKGDIR ?= $(ROOT_DIR)/patches
