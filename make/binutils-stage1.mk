@@ -37,7 +37,7 @@ $(BINUTILS1_BUILD_DIR)/.built-stage1: $(BINUTILS_STAMP)
 		binutils-stage1-extract)
 
 	$(call do_step,CONFIG,binutils-stage1, \
-		$(call with_cross_env$(COMMA) cd $(BINUTILS1_BUILD_DIR) && $(BINUTILS_SRC_DIR)/configure \
+		$(call with_cross_env,cd $(BINUTILS1_BUILD_DIR) && $(BINUTILS_SRC_DIR)/configure \
 			--target=$(TARGET) \
 			--prefix=$(STAGE1_TOOLCHAIN_ROOT) \
 			--with-sysroot=$(STAGE1_SYSROOT) \
