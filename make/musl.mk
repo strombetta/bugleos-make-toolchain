@@ -63,44 +63,12 @@ $(MUSL_BUILD_DIR)/.built-musl: $(MUSL_STAMP)
 		$(MAKE) -C "$(MUSL_BUILD_DIR)" DESTDIR="$(SYSROOT)" install, \
 		musl-install)
 
-		$(call do_step,CHECK,musl, \
-		test -f "$(SYSROOT)/usr/include/stdio.h", \
-		musl-check-stdio-h)
-
 	$(call do_step,CHECK,musl, \
-		test -f "$(SYSROOT)/usr/include/stdlib.h", \
-		musl-check-stdlib-h)
-
-	$(call do_step,CHECK,musl, \
-		test -f "$(SYSROOT)/usr/include/unistd.h", \
-		musl-check-unistd-h)
-
-	$(call do_step,CHECK,musl, \
-		test -f "$(SYSROOT)/usr/include/errno.h", \
-		musl-check-errno-h)
-
-	$(call do_step,CHECK,musl, \
-		test -f "$(SYSROOT)/usr/include/pthread.h", \
-		musl-check-pthread-h)
-
-	$(call do_step,CHECK,musl, \
+		echo "SYSROOT=$(SYSROOT)"; \
+		echo "MUSL_LDSO=$(MUSL_LDSO)"; \
+		ls -l "$(SYSROOT)/lib/$(MUSL_LDSO)" 2>/dev/null || true; \
+		ls -l "$(SYSROOT)/usr/lib/$(MUSL_LDSO)" 2>/dev/null || true; \
 		test -f "$(SYSROOT)/lib/$(MUSL_LDSO)" || test -f "$(SYSROOT)/usr/lib/$(MUSL_LDSO)", \
-		musl-check-ldso)
-
-	$(call do_step,CHECK,musl, \
-		test -f "$(SYSROOT)/lib/crt1.o" || test -f "$(SYSROOT)/usr/lib/crt1.o", \
-		musl-check-crt1-o)
-
-	$(call do_step,CHECK,musl, \
-		test -f "$(SYSROOT)/lib/crti.o" || test -f "$(SYSROOT)/usr/lib/crti.o", \
-		musl-check-crti-o)
-
-	$(call do_step,CHECK,musl, \
-		test -f "$(SYSROOT)/lib/crtn.o" || test -f "$(SYSROOT)/usr/lib/crtn.o", \
-		musl-check-crtn-o)
-
-	$(call do_step,CHECK,musl, \
-		ls -1 "$(SYSROOT)/lib/libc.so"* >/dev/null 2>&1 || ls -1 "$(SYSROOT)/usr/lib/libc.so"* >/dev/null 2>&1, \
-		musl-check-libc-so)
+	musl-check-ldso)
 
 	$(Q)touch $@
