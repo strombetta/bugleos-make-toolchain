@@ -39,7 +39,7 @@ $(MUSL_BUILD_DIR)/.built-musl: $(MUSL_STAMP)
 	$(call do_step,CONFIG,musl, \
 		PATH="$(STAGE1_TOOLCHAIN_ROOT)/bin:$$PATH" && \
 		cd "$(MUSL_BUILD_DIR)" && "$(MUSL_SRC_DIR)/configure" \
-			CC="$(TARGET)-gcc" \
+			CC="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-gcc" \
 			--prefix=/usr \
 			--target="$(TARGET)" \
 			--host="$(TARGET)" \
