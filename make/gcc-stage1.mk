@@ -35,33 +35,34 @@ $(GCC_BUILD_DIR)/.built-stage1: $(GCC_STAMP)
 	$(call do_step,EXTRACT,gcc-stage1, \
 		$(MAKE) -f $(THIS_MAKEFILE) unpack-gcc, \
 		gcc-stage1-extract)
-	
+
 	$(call do_step,EXTRACT,gcc-stage1-prerequisites, \
 		cd $(GCC_SRC_DIR) && ./contrib/download_prerequisites, \
 		gcc-stage1-prereqs)
 
 	$(call do_step,CONFIG,gcc-stage1, \
 		cd $(GCC_BUILD_DIR) && $(GCC_SRC_DIR)/configure \
-		--target=$(TARGET) \
-		--prefix=$(STAGE1_TOOLCHAIN_ROOT) \
-		--with-sysroot=$(STAGE1_SYSROOT) \
-		--with-newlib \
-		--without-headers \
-		--disable-nls \
-		--disable-shared \
-		--disable-threads \
-		--disable-libmudflap \
-		--disable-decimal-float \
-		--disable-libatomic \
-		--disable-libgomp \
-		--disable-libquadmath \
-		--disable-libssp \
-		--disable-libvtv \
-		--disable-multilib \
-		--enable-languages=c \
-		--enable-checking=release, \
-		gcc-stage1-configure)
-	
+			--target=$(TARGET) \
+			--prefix=$(TOOLCHAIN_ROOT) \
+			--with-sysroot=$(SYSROOT) \
+			--with-newlib \
+			--with-native-system-header-dir=/usr/include \
+			--without-headers \
+			--disable-nls \
+			--disable-shared \
+			--disable-threads \
+			--disable-libmudflap \
+			--disable-decimal-float \
+			--disable-libatomic \
+			--disable-libgomp \
+			--disable-libquadmath \
+			--disable-libssp \
+			--disable-libvtv \
+			--disable-multilib \
+			--enable-languages=c \
+			--enable-checking=release, \
+			gcc-stage1-configure)
+
 	$(call do_step,BUILD,gcc-stage1, \
 		PATH="$(STAGE1_TOOLCHAIN_ROOT)/bin:$$PATH" && \
 		$(MAKE) -C $(GCC_BUILD_DIR) -j$(JOBS) all-gcc, \
