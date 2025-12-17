@@ -41,7 +41,17 @@ $(GCC_BUILD_DIR)/.built-stage1: $(GCC_STAMP)
 		gcc-stage1-prereqs)
 
 	$(call do_step,CONFIG,gcc-stage1, \
-		PATH="/usr/bin:/bin:$$PATH" && \
+		PATH="/usr/bin:/bin:$(STAGE1_TOOLCHAIN_ROOT)/bin:$$PATH" \
+		CC="gcc" \
+		AR="/usr/bin/ar" \
+		AS="/usr/bin/as" \
+		LD="/usr/bin/ld" \
+		NM="/usr/bin/nm" \
+		OBJCOPY="/usr/bin/objcopy" \
+		OBJDUMP="/usr/bin/objdump" \
+		RANLIB="/usr/bin/ranlib" \
+		READELF="/usr/bin/readelf" \
+		STRIP="/usr/bin/strip" \
 		cd "$(GCC_BUILD_DIR)" && "$(GCC_SRC_DIR)/configure" \
 			--target="$(TARGET)" \
 			--prefix="$(STAGE1_TOOLCHAIN_ROOT)" \
@@ -73,13 +83,25 @@ $(GCC_BUILD_DIR)/.built-stage1: $(GCC_STAMP)
 		gcc-stage1-configure)
 
 	$(call do_step,BUILD,gcc-stage1, \
-		PATH="$(STAGE1_TOOLCHAIN_ROOT)/bin:$$PATH" && \
-		$(MAKE) -C $(GCC_BUILD_DIR) -j$(JOBS) all-gcc, \
+		PATH="/usr/bin:/bin:$(STAGE1_TOOLCHAIN_ROOT)/bin:$$PATH" \
+		AR="/usr/bin/ar" \
+		AS="/usr/bin/as" \
+		LD="/usr/bin/ld" \
+		NM="/usr/bin/nm" \
+		RANLIB="/usr/bin/ranlib" \
+		STRIP="/usr/bin/strip" \
+		$(MAKE) -C "$(GCC_BUILD_DIR)" -j"$(JOBS)" all-gcc, \
 		gcc-stage1-build)
 
 	$(call do_step,BUILD,gcc-stage1-libgcc, \
-		PATH="$(STAGE1_TOOLCHAIN_ROOT)/bin:$$PATH" && \
-		$(MAKE) -C $(GCC_BUILD_DIR) -j$(JOBS) all-target-libgcc, \
+		PATH="/usr/bin:/bin:$(STAGE1_TOOLCHAIN_ROOT)/bin:$$PATH" \
+		AR="/usr/bin/ar" \
+		AS="/usr/bin/as" \
+		LD="/usr/bin/ld" \
+		NM="/usr/bin/nm" \
+		RANLIB="/usr/bin/ranlib" \
+		STRIP="/usr/bin/strip" \
+		$(MAKE) -C "$(GCC_BUILD_DIR)" -j"$(JOBS)" all-target-libgcc, \
 		gcc-stage1-libgcc-build)
 
 	$(call do_step,INSTALL,gcc-stage1, \
