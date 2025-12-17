@@ -37,6 +37,7 @@ $(BINUTILS2_BUILD_DIR)/.built-stage2: $(BINUTILS_STAMP)
 		binutils-stage2-extract)
 
 	$(call do_step,CONFIG,binutils-stage2, \
+		PATH="$(STAGE1_TOOLCHAIN_ROOT)/bin:$$PATH" && \
 		cd $(BINUTILS2_BUILD_DIR) && $(BINUTILS_SRC_DIR)/configure \
 		--target=$(TARGET) \
 		--prefix=$(TOOLCHAIN_ROOT) \
@@ -47,11 +48,22 @@ $(BINUTILS2_BUILD_DIR)/.built-stage2: $(BINUTILS_STAMP)
 		binutils-stage2-configure)
 
 	$(call do_step,BUILD,binutils-stage2, \
+		PATH="$(STAGE1_TOOLCHAIN_ROOT)/bin:$$PATH" && \
 		$(MAKE) -C $(BINUTILS2_BUILD_DIR) -j$(JOBS), \
 	binutils-stage2-build)
 
 	$(call do_step,INSTALL,binutils-stage2, \
 		$(MAKE) -C $(BINUTILS2_BUILD_DIR) install, \
 	binutils-stage2-install)
+
+	$(call do_step,CHECK,binutils-stage2, \
+		sh -eu -c '\
+			test -x "$(TOOLCHAIN_ROOT)/bin/$(TARGET)-ld"; \
+			test -x "$(TOOLCHAIN_ROOT)/bin/$(TARGET)-as"; \
+			test -x "$(TOOLCHAIN_ROOT)/bin/$(TARGET)-ar"; \
+			"$(TOOLCHAIN_ROOT)/bin/$(TARGET)-ld" -v >/dev/null 2>&1; \
+			"$(TOOLCHAIN_ROOT)/bin/$(TARGET)-as" --version >/dev/null 2>&1; \
+			"$(TOOLCHAIN_ROOT)/bin/$(TARGET)-ar" --version >/dev/null 2>&1', \
+		binutils-stage2-check)
 
 	$(Q)touch $@
