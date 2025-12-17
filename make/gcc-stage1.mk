@@ -64,18 +64,37 @@ $(GCC_BUILD_DIR)/.built-stage1: $(GCC_STAMP)
 			gcc-stage1-configure)
 
 	$(call do_step,BUILD,gcc-stage1, \
+		PATH="$(STAGE1_TOOLCHAIN_ROOT)/bin:$$PATH" && \
 		$(MAKE) -C $(GCC_BUILD_DIR) -j$(JOBS) all-gcc, \
 		gcc-stage1-build)
 
 	$(call do_step,BUILD,gcc-stage1-libgcc, \
+		PATH="$(STAGE1_TOOLCHAIN_ROOT)/bin:$$PATH" && \
 		$(MAKE) -C $(GCC_BUILD_DIR) -j$(JOBS) all-target-libgcc, \
 		gcc-stage1-libgcc-build)
 
 	$(call do_step,INSTALL,gcc-stage1, \
+		PATH="$(STAGE1_TOOLCHAIN_ROOT)/bin:$$PATH" && \
 		$(MAKE) -C $(GCC_BUILD_DIR) install-gcc, \
 		gcc-stage1-install)
 
 	$(call do_step,INSTALL,gcc-stage1-libgcc, \
+		PATH="$(STAGE1_TOOLCHAIN_ROOT)/bin:$$PATH" && \
 		$(MAKE) -C $(GCC_BUILD_DIR) install-target-libgcc, \
 		gcc-stage1-libgcc-install)
+
+	$(call do_step,CHECK,gcc-stage1, \
+		sh -eu -c '\
+			test -x "$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-gcc"; \
+			test -x "$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-ld"; \
+			"$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-gcc" -dumpmachine | grep -qx "$(TARGET)"; \
+			"$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-gcc" -v >/dev/null 2>&1; \
+			printf "%s\n" "int x;" | \
+				PATH="$(STAGE1_TOOLCHAIN_ROOT)/bin:$$PATH" \
+				"$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-gcc" \
+					-x c - -c -o /tmp/gcc-stage1-check.o; \
+			rm -f /tmp/gcc-stage1-check.o; \
+			"$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-ld" -v >/dev/null 2>&1', \
+		gcc-stage1-check)
+
 	$(Q)touch $@

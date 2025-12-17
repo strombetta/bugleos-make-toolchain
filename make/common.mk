@@ -25,34 +25,35 @@ include $(ROOT_DIR)/config/versions.mk
 
 # define quite / verbose
 ifeq ($(V),1)
-	Q :=
+Q :=
 else
-	Q := @
+Q := @
 endif
 
 # $(call do_step, TAG, LABEL, COMMAND, LOGFILE)
 define do_step
-        $(Q)printf "  %-8s %s\n" "$(1)" "$(2)"
-        $(Q){ $(3); } > "$(LOGS_DIR)/$(strip $(4)).log" 2>&1 || { \
-                printf "  %-8s %s [FAILED] (see %s)\n" "$(1)" "$(2)" "$(LOGS_DIR)/$(strip $(4)).log"; \
-        exit 1; }
+	$(Q)printf "  %-8s %s\n" "$(1)" "$(2)"
+	$(Q){ $(3); } > "$(LOGS_DIR)/$(strip $(4)).log" 2>&1 || { \
+	printf "  %-8s %s [FAILED] (see %s)\n" "$(1)" "$(2)" "$(LOGS_DIR)/$(strip $(4)).log"; \
+	exit 1; }
 endef
 
 # $(call do_download, LABEL, COMMAND, LOGFILE)
 define do_download
-        $(call do_step,DOWNLOAD,$(1),$(2),$(3))
+	$(call do_step,DOWNLOAD,$(1),$(2),$(3))
 endef
 
 # $(call do_verify, LABEL, COMMAND, LOGFILE)
 define do_verify
-        $(call do_step,VERIFY,$(1),$(2),$(3))
+	$(call do_step,VERIFY,$(1),$(2),$(3))
 endef
 
 # Ensure the previously built toolchain binaries are discoverable for subsequent stages.
-# Binutils/GCC installed with --prefix=$(TOOLCHAIN_ROOT) place cross-prefixed binaries in
-# $(TOOLCHAIN_ROOT)/bin, while some packages may still drop helpers under
-# $(TOOLCHAIN_ROOT)/$(TARGET)/bin. Include both to keep the toolchain visible.
-export PATH := $(TOOLCHAIN_ROOT)/bin:$(TOOLCHAIN_ROOT)/$(TARGET)/bin:$(PATH)
+# Final outputs live under $(TOOLCHAIN_ROOT), while bootstrap bits are kept in
+# $(STAGE1_TOOLCHAIN_ROOT) to avoid mixing temporary artifacts with the final toolchain.
+# Binutils/GCC install cross-prefixed binaries in both <prefix>/bin and
+# <prefix>/<TARGET>/bin, so include both locations for stage1 and stage2.
+export PATH := $(TOOLCHAIN_ROOT)/bin:$(TOOLCHAIN_ROOT)/$(TARGET)/bin:$(STAGE1_TOOLCHAIN_ROOT)/bin:$(STAGE1_TOOLCHAIN_ROOT)/$(TARGET)/bin:$(PATH)
 
 HOST ?= $(shell uname -m)-unknown-linux-gnu
 PKGDIR ?= $(ROOT_DIR)/patches
@@ -75,7 +76,7 @@ BINUTILS2_BUILD_DIR := $(BUILDS_DIR)/binutils-stage2
 
 .PHONY: ensure-dirs
 ensure-dirs:
-	@mkdir -p $(DOWNLOADS_DIR) $(SOURCES_DIR) $(BUILDS_DIR) $(OUT_DIR) $(TOOLCHAIN_ROOT) $(SYSROOT) $(LOGS_DIR)
+	@mkdir -p $(DOWNLOADS_DIR) $(SOURCES_DIR) $(BUILDS_DIR) $(OUT_DIR) $(TOOLCHAIN_ROOT) $(TOOLCHAIN) $(STAGE1_TOOLCHAIN_ROOT) $(SYSROOT) $(STAGE1_SYSROOT) $(LOGS_DIR)
 
 .PHONY: ensure-binutils ensure-gcc ensure-musl
 ensure-binutils: $(BINUTILS_STAMP)

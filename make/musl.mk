@@ -37,24 +37,58 @@ $(MUSL_BUILD_DIR)/.built-musl: $(MUSL_STAMP)
 		musl-extract)
 
 	$(call do_step,CONFIG,musl, \
-		cd $(MUSL_SRC_DIR) && CC="$(TARGET)-gcc" ./configure \
-		--prefix=/usr \
-		--target=$(TARGET) \
-		--host=$(TARGET) \
-		--enable-wrapper=no \
-		--syslibdir=/lib, \
+		PATH="$(STAGE1_TOOLCHAIN_ROOT)/bin:$$PATH" && \
+		cd "$(MUSL_BUILD_DIR)" && "$(MUSL_SRC_DIR)/configure" \
+			CC="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-gcc" \
+			--prefix=/usr \
+			--target="$(TARGET)" \
+			--host="$(TARGET)" \
+			--enable-wrapper=no \
+			--syslibdir=/lib, \
 		musl-configure)
 
 	$(call do_step,INSTALL,musl-headers, \
-		$(MAKE) -C $(MUSL_SRC_DIR) DESTDIR=$(SYSROOT) install-headers, \
+		PATH="$(STAGE1_TOOLCHAIN_ROOT)/bin:$$PATH" && \
+		$(MAKE) -C "$(MUSL_BUILD_DIR)" DESTDIR="$(SYSROOT)" install-headers, \
 		musl-headers)
 
 	$(call do_step,BUILD,musl, \
-		$(MAKE) -C $(MUSL_SRC_DIR) -j$(JOBS) CROSS_COMPILE=$(TARGET)-, \
+		PATH="$(STAGE1_TOOLCHAIN_ROOT)/bin:$$PATH" && \
+		$(MAKE) -C "$(MUSL_BUILD_DIR)" -j"$(JOBS)" CROSS_COMPILE="$(TARGET)-", \
 		musl-build)
 
 	$(call do_step,INSTALL,musl, \
-		$(MAKE) -C $(MUSL_SRC_DIR) DESTDIR=$(SYSROOT) install, \
+		PATH="$(STAGE1_TOOLCHAIN_ROOT)/bin:$$PATH" && \
+		$(MAKE) -C "$(MUSL_BUILD_DIR)" DESTDIR="$(SYSROOT)" install, \
 		musl-install)
+	
+	$(call do_step,INSTALL,musl-fix-ldso-symlink, \
+		set -e; \
+		ldso="$(SYSROOT)/lib/$(MUSL_LDSO)"; \
+		if [ -L "$$ldso" ]; then \
+		  t="$$(readlink "$$ldso")"; \
+		  if [ "$$t" = "/usr/lib/libc.so" ]; then \
+		    ln -snf "../usr/lib/libc.so" "$$ldso"; \
+		  fi; \
+		fi, \
+		musl-fix-ldso-symlink)
+
+		$(call do_step,CHECK,musl, \
+			sh -eu -c '\
+				test -f "$(SYSROOT)/usr/include/stdio.h"; \
+				test -f "$(SYSROOT)/usr/include/stdlib.h"; \
+				test -f "$(SYSROOT)/usr/include/unistd.h"; \
+				test -f "$(SYSROOT)/usr/include/errno.h"; \
+				test -f "$(SYSROOT)/usr/include/pthread.h"; \
+				( test -e "$(SYSROOT)/lib/$(MUSL_LDSO)" || test -e "$(SYSROOT)/usr/lib/$(MUSL_LDSO)" ); \
+				( test -f "$(SYSROOT)/lib/crt1.o" || test -f "$(SYSROOT)/usr/lib/crt1.o" ); \
+				( test -f "$(SYSROOT)/lib/crti.o" || test -f "$(SYSROOT)/usr/lib/crti.o" ); \
+				( test -f "$(SYSROOT)/lib/crtn.o" || test -f "$(SYSROOT)/usr/lib/crtn.o" ); \
+				( ls -1 "$(SYSROOT)/lib/libc.so"* >/dev/null 2>&1 || ls -1 "$(SYSROOT)/usr/lib/libc.so"* >/dev/null 2>&1 ); \
+				if [ -L "$(SYSROOT)/lib/$(MUSL_LDSO)" ]; then \
+					[ "$$(readlink "$(SYSROOT)/lib/$(MUSL_LDSO)")" = "../usr/lib/libc.so" ]; \
+					test -e "$(SYSROOT)/usr/lib/libc.so"; \
+				fi', \
+		musl-check)
 
 	$(Q)touch $@

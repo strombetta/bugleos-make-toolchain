@@ -39,8 +39,8 @@ $(BINUTILS1_BUILD_DIR)/.built-stage1: $(BINUTILS_STAMP)
 	$(call do_step,CONFIG,binutils-stage1, \
 		cd $(BINUTILS1_BUILD_DIR) && $(BINUTILS_SRC_DIR)/configure \
 		--target=$(TARGET) \
-		--prefix=$(TOOLCHAIN_ROOT) \
-		--with-sysroot=$(SYSROOT) \
+		--prefix=$(STAGE1_TOOLCHAIN_ROOT) \
+		--with-sysroot=$(STAGE1_SYSROOT) \
 		--disable-nls \
 		--disable-werror \
 		--enable-deterministic-archives, \
@@ -53,5 +53,13 @@ $(BINUTILS1_BUILD_DIR)/.built-stage1: $(BINUTILS_STAMP)
 	$(call do_step,INSTALL,binutils-stage1, \
 		$(MAKE) -C "$(BINUTILS1_BUILD_DIR)" install, \
 		binutils-stage1-install)
+
+	$(call do_step,CHECK,binutils-stage1, \
+		sh -eu -c '\
+			test -x "$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-ld"; \
+			test -x "$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-as"; \
+			test -x "$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-ar"; \
+			"$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-ld" -v >/dev/null 2>&1', \
+		binutils-stage1-check)
 
 	$(Q)touch $@
