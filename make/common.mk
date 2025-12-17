@@ -23,6 +23,9 @@ ROOT_DIR ?= $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/..)
 include $(ROOT_DIR)/config/paths.mk
 include $(ROOT_DIR)/config/versions.mk
 
+# define comma
+COMMA := ","
+
 # define quite / verbose
 ifeq ($(V),1)
 Q :=
@@ -38,18 +41,6 @@ define do_step
 	exit 1; }
 endef
 
-# Run a command with a clean host PATH (no cross contamination)
-# Usage: $(call with_host_env, <command>)
-define with_host_env
-	env PATH="$(HOST_PATH)" $(1)
-endef
-
-# Run a command with cross tools available (but still host tools first)
-# Usage: $(call with_cross_env, <command>)
-define with_cross_env
-	env PATH="$(HOST_PATH):$(CROSS_PATH)" $(1)
-endef
-
 # $(call do_download, LABEL, COMMAND, LOGFILE)
 define do_download
 	$(call do_step,DOWNLOAD,$(1),$(2),$(3))
@@ -60,7 +51,15 @@ define do_verify
 	$(call do_step,VERIFY,$(1),$(2),$(3))
 endef
 
-COMMA=","
+# $(call with_host_env, COMMAND)
+define with_host_env
+	env PATH="/usr/bin:/bin:$(PATH)" $(1)
+endef
+
+# $(call with_cross_env, COMMAND)
+define with_cross_env
+	env PATH="/usr/bin:/bin:$(PATH):$(TOOLCHAIN_ROOT)/bin:$(TOOLCHAIN_ROOT)/$(TARGET)/bin:$(STAGE1_TOOLCHAIN_ROOT)/bin:$(STAGE1_TOOLCHAIN_ROOT)/$(TARGET)/bin" $(1)
+endef
 
 # PATH baseline (host tools)
 HOST_PATH := /usr/bin:/bin:$(PATH)
