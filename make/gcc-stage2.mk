@@ -22,8 +22,6 @@
 THIS_MAKEFILE := $(lastword $(MAKEFILE_LIST))
 include $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/common.mk)
 
-COMMA=","
-
 .PHONY: all
 all: gcc-stage2
 

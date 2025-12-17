@@ -60,6 +60,8 @@ define do_verify
 	$(call do_step,VERIFY,$(1),$(2),$(3))
 endef
 
+COMMA=","
+
 # PATH baseline (host tools)
 HOST_PATH := /usr/bin:/bin:$(PATH)
 # PATH to discover cross tools (prefixed) when needed
