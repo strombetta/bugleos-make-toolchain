@@ -37,28 +37,40 @@ $(MUSL_BUILD_DIR)/.built-musl: $(MUSL_STAMP)
 		musl-extract)
 
 	$(call do_step,CONFIG,musl, \
-		cd $(MUSL_SRC_DIR) && CC="$(TARGET)-gcc" ./configure \
-		--prefix=/usr \
-		--target=$(TARGET) \
-		--host=$(TARGET) \
-		--enable-wrapper=no \
-		--syslibdir=/lib, \
+		PATH="$(STAGE1_TOOLCHAIN_ROOT)/bin:$$PATH" && \
+		cd "$(MUSL_BUILD_DIR)" && "$(MUSL_SRC_DIR)/configure" \
+			CC="$(TARGET)-gcc" \
+			--prefix=/usr \
+			--target="$(TARGET)" \
+			--host="$(TARGET)" \
+			--enable-wrapper=no \
+			--syslibdir=/lib, \
 		musl-configure)
 
 	$(call do_step,INSTALL,musl-headers, \
-		$(MAKE) -C $(MUSL_SRC_DIR) DESTDIR=$(SYSROOT) install-headers, \
+		$(MAKE) -C "$(MUSL_BUILD_DIR)" DESTDIR="$(SYSROOT)" install-headers, \
 		musl-headers)
 
 	$(call do_step,BUILD,musl, \
-		$(MAKE) -C $(MUSL_SRC_DIR) -j$(JOBS) CROSS_COMPILE=$(TARGET)-, \
+		PATH="$(STAGE1_TOOLCHAIN_ROOT)/bin:$$PATH" && \
+		$(MAKE) -C "$(MUSL_BUILD_DIR)" -j"$(JOBS)" CROSS_COMPILE="$(TARGET)-", \
 		musl-build)
 
 	$(call do_step,INSTALL,musl, \
-		$(MAKE) -C $(MUSL_SRC_DIR) DESTDIR=$(SYSROOT) install, \
+		$(MAKE) -C "$(MUSL_BUILD_DIR)" DESTDIR="$(SYSROOT)" install, \
 		musl-install)
 
-	$(call do_step,INSTALL,musl-include-link, \
-		mkdir -p $(SYSROOT) && { [ -e $(SYSROOT)/include ] || ln -s usr/include $(SYSROOT)/include; }, \
-		musl-include-link)
+	$(call do_step,CHECK,musl, \
+		test -f "$(SYSROOT)/usr/include/stdio.h" && \
+		test -f "$(SYSROOT)/usr/include/stdlib.h" && \
+		test -f "$(SYSROOT)/usr/include/unistd.h" && \
+		test -f "$(SYSROOT)/usr/include/errno.h" && \
+		test -f "$(SYSROOT)/usr/include/pthread.h" && \
+		( test -f "$(SYSROOT)/lib/ld-musl-aarch64.so.1" || test -f "$(SYSROOT)/usr/lib/ld-musl-aarch64.so.1" ) && \
+		( test -f "$(SYSROOT)/lib/crt1.o" || test -f "$(SYSROOT)/usr/lib/crt1.o" ) && \
+		( test -f "$(SYSROOT)/lib/crti.o" || test -f "$(SYSROOT)/usr/lib/crti.o" ) && \
+		( test -f "$(SYSROOT)/lib/crtn.o" || test -f "$(SYSROOT)/usr/lib/crtn.o" ) && \
+		( test -f "$(SYSROOT)/lib/libc.so" || test -f "$(SYSROOT)/usr/lib/libc.so" || test -f "$(SYSROOT)/lib/libc.so.1" || test -f "$(SYSROOT)/usr/lib/libc.so.1" ), \
+		musl-check)
 
 	$(Q)touch $@
