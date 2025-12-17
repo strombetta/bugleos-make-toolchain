@@ -74,25 +74,26 @@ $(MUSL_BUILD_DIR)/.built-musl: $(MUSL_STAMP)
 		musl-fix-ldso-symlink)
 
 	$(call do_step,CHECK,musl, \
-		test -L "$(SYSROOT)/lib/$(MUSL_LDSO)" && \
-		test "$$(readlink "$(SYSROOT)/lib/$(MUSL_LDSO)")" = "../usr/lib/libc.so", \
-		musl-check-ldso-relative)
-
-	$(call do_step,CHECK,musl, \
-		test -e "$(SYSROOT)/usr/lib/libc.so", \
-		musl-check-libc-so-at-usrlib)
-
-
-	$(call do_step,CHECK,musl, \
-		echo "SYSROOT=$(SYSROOT)"; \
-		echo "MUSL_LDSO=$(MUSL_LDSO)"; \
-		ls -l "$(SYSROOT)/lib/$(MUSL_LDSO)" 2>/dev/null || true; \
-		ls -l "$(SYSROOT)/usr/lib/$(MUSL_LDSO)" 2>/dev/null || true; \
-		test -f "$(SYSROOT)/lib/$(MUSL_LDSO)" || test -f "$(SYSROOT)/usr/lib/$(MUSL_LDSO)", \
-	musl-check-ldso)
-
-	$(call do_step,CHECK,musl, \
-		test -e "$(SYSROOT)/usr/lib/libc.so" || test -e "$(SYSROOT)/usr/lib/libc.so.1" || test -e "$(SYSROOT)/lib/libc.so" || test -e "$(SYSROOT)/lib/libc.so.1", \
-		musl-check-libc-present)
+		set -e; \
+		test -f "$(SYSROOT)/usr/include/stdio.h"; \
+		test -f "$(SYSROOT)/usr/include/stdlib.h"; \
+		test -f "$(SYSROOT)/usr/include/unistd.h"; \
+		test -f "$(SYSROOT)/usr/include/errno.h"; \
+		test -f "$(SYSROOT)/usr/include/pthread.h"; \
+		\
+		( test -e "$(SYSROOT)/lib/$(MUSL_LDSO)" || test -e "$(SYSROOT)/usr/lib/$(MUSL_LDSO)" ); \
+		\
+		( test -f "$(SYSROOT)/lib/crt1.o"  || test -f "$(SYSROOT)/usr/lib/crt1.o" ); \
+		( test -f "$(SYSROOT)/lib/crti.o"  || test -f "$(SYSROOT)/usr/lib/crti.o" ); \
+		( test -f "$(SYSROOT)/lib/crtn.o"  || test -f "$(SYSROOT)/usr/lib/crtn.o" ); \
+		\
+		( ls -1 "$(SYSROOT)/lib/libc.so"* >/dev/null 2>&1 || ls -1 "$(SYSROOT)/usr/lib/libc.so"* >/dev/null 2>&1 ); \
+		\
+		# relocatability: ldso symlink must be relative (if it is a symlink) \
+		if [ -L "$(SYSROOT)/lib/$(MUSL_LDSO)" ]; then \
+			test "$$(readlink "$(SYSROOT)/lib/$(MUSL_LDSO)")" = "../usr/lib/libc.so"; \
+			test -e "$(SYSROOT)/usr/lib/libc.so"; \
+		fi, \
+		musl-check)
 
 	$(Q)touch $@
