@@ -31,6 +31,7 @@ musl: ensure-dirs $(MUSL_BUILD_DIR)/.built-musl
 $(MUSL_BUILD_DIR)/.built-musl: $(MUSL_STAMP)
 	$(Q)rm -rf $(MUSL_BUILD_DIR)
 	$(Q)mkdir -p $(MUSL_BUILD_DIR)
+	echo "LDSO = $(MUSL_LDSO)"
 
 	$(call do_step,EXTRACT,musl, \
 		$(MAKE) -f $(THIS_MAKEFILE) unpack-musl, \
