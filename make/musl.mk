@@ -62,6 +62,27 @@ $(MUSL_BUILD_DIR)/.built-musl: $(MUSL_STAMP)
 		PATH="$(STAGE1_TOOLCHAIN_ROOT)/bin:$$PATH" && \
 		$(MAKE) -C "$(MUSL_BUILD_DIR)" DESTDIR="$(SYSROOT)" install, \
 		musl-install)
+	
+	$(call do_step,INSTALL,musl-fix-ldso-symlink, \
+		set -e; \
+		ldso="$(SYSROOT)/lib/$(MUSL_LDSO)"; \
+		if [ -L "$$ldso" ]; then \
+		  t="$$(readlink "$$ldso")"; \
+		  if [ "$$t" = "/usr/lib/libc.so" ]; then \
+		    ln -snf "../usr/lib/libc.so" "$$ldso"; \
+		  fi; \
+		fi, \
+		musl-fix-ldso-symlink)
+
+	$(call do_step,CHECK,musl, \
+		test -L "$(SYSROOT)/lib/$(MUSL_LDSO)" && \
+		test "$$(readlink "$(SYSROOT)/lib/$(MUSL_LDSO)")" = "../usr/lib/libc.so", \
+		musl-check-ldso-relative)
+
+	$(call do_step,CHECK,musl, \
+		test -e "$(SYSROOT)/usr/lib/libc.so", \
+		musl-check-libc-so-at-usrlib)
+
 
 	$(call do_step,CHECK,musl, \
 		echo "SYSROOT=$(SYSROOT)"; \
