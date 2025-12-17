@@ -87,10 +87,12 @@ $(GCC_BUILD_DIR)/.built-stage1: $(GCC_STAMP)
 		test -x "$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-ld" && \
 		"$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-gcc" -dumpmachine | grep -qx "$(TARGET)" && \
 		"$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-gcc" -v >/dev/null 2>&1 && \
-		PATH="$(STAGE1_TOOLCHAIN_ROOT)/bin:$$PATH" \
+		printf '%s\n' 'int x;' | \
+			PATH="$(STAGE1_TOOLCHAIN_ROOT)/bin:$$PATH" \
 			"$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-gcc" \
-			-x c - -c -o /tmp/gcc-stage1-check.o <<< 'int x;' && \
-		rm -f /tmp/gcc-stage1-check.o, \
+				-x c - -c -o /tmp/gcc-stage1-check.o && \
+		rm -f /tmp/gcc-stage1-check.o && \
+		"$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-ld" -v >/dev/null 2>&1, \
 		gcc-stage1-check)
-	
+
 	$(Q)touch $@
