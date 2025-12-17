@@ -35,7 +35,7 @@ $(GCC_BUILD_DIR)/.built-stage1: $(GCC_STAMP)
 	$(call do_step,EXTRACT,gcc-stage1, \
 		$(MAKE) -f $(THIS_MAKEFILE) unpack-gcc, \
 		gcc-stage1-extract)
-	
+
 	$(call do_step,EXTRACT,gcc-stage1-prerequisites, \
 		cd $(GCC_SRC_DIR) && ./contrib/download_prerequisites, \
 		gcc-stage1-prereqs)
@@ -62,7 +62,7 @@ $(GCC_BUILD_DIR)/.built-stage1: $(GCC_STAMP)
 			--enable-languages=c \
 			--enable-checking=release, \
 			gcc-stage1-configure)
-	
+
 	$(call do_step,BUILD,gcc-stage1, \
 		$(MAKE) -C $(GCC_BUILD_DIR) -j$(JOBS) all-gcc, \
 		gcc-stage1-build)
