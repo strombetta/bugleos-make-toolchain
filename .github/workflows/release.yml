@@ -61,6 +61,14 @@ jobs:
         run: |
           set -euo pipefail
           make ${{ matrix.target }}
+        
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.label }}-logs
+          path: logs/
+          if-no-files-found: warn
 
       - name: Package artifacts
         run: |
@@ -70,10 +78,10 @@ jobs:
           triple="${{ matrix.triple }}"
           label="${{ matrix.label }}"
           tarball="bugleos-toolchain-${version}-${label}.tar.gz"
-          include_paths=("out/toolchain/${triple}")
-          if [ -d "out/sysroot/${triple}" ]; then
-            include_paths+=("out/sysroot/${triple}")
-          fi
+          include_paths=("out/toolchain")
+          # if [ -d "out/sysroot/${triple}" ]; then
+          #   include_paths+=("out/sysroot/${triple}")
+          # fi
           tar -czf "dist/${tarball}" "${include_paths[@]}"
           echo "TARBALL_PATH=dist/${tarball}" >> "$GITHUB_ENV"
 
