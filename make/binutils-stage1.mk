@@ -55,10 +55,11 @@ $(BINUTILS1_BUILD_DIR)/.built-stage1: $(BINUTILS_STAMP)
 		binutils-stage1-install)
 
 	$(call do_step,CHECK,binutils-stage1, \
-		test -x "$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-ld" && \
-		test -x "$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-as" && \
-		test -x "$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-ar" && \
-		"$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-ld" -v, \
+		sh -eu -c '\
+			test -x "$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-ld"; \
+			test -x "$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-as"; \
+			test -x "$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-ar"; \
+			"$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-ld" -v >/dev/null 2>&1', \
 		binutils-stage1-check)
 
 	$(Q)touch $@
