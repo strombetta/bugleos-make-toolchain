@@ -10,7 +10,7 @@ ROOT_DIR="${ROOT_DIR:-$(cd "$(dirname "$0")/.." && pwd)}"
 TARGET="${TARGET:-x86_64-bugleos-linux-musl}"
 TOOLCHAIN_ROOT="${TOOLCHAIN_ROOT:-$ROOT_DIR/out/toolchain}"
 TOOLCHAIN="${TOOLCHAIN:-$TOOLCHAIN_ROOT/$TARGET}"
-SYSROOT="${SYSROOT:-$TOOLCHAIN/sysroot}"
+SYSROOT="${SYSROOT:-$ROOT_DIR/out/sysroot/$TARGET}"
 STAGE1_SYSROOT="${STAGE1_SYSROOT:-$ROOT_DIR/out/sysroot-stage1/$TARGET}"
 VERSIONS_MK="$ROOT_DIR/config/versions.mk"
 
