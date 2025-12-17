@@ -57,4 +57,8 @@ $(MUSL_BUILD_DIR)/.built-musl: $(MUSL_STAMP)
 		$(MAKE) -C $(MUSL_SRC_DIR) DESTDIR=$(SYSROOT) install, \
 		musl-install)
 
+	$(call do_step,INSTALL,musl-include-link, \
+		mkdir -p $(SYSROOT) && { [ -e $(SYSROOT)/include ] || ln -s usr/include $(SYSROOT)/include; }, \
+		musl-include-link)
+
 	$(Q)touch $@

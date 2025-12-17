@@ -43,14 +43,13 @@ $(GCC_BUILD_DIR)/.built-gcc-stage2: $(GCC_STAMP)
 		gcc-stage2-prereqs)
 
 	$(call do_step,CONFIG,gcc-stage2, \
-		cd $(GCC_BUILD_DIR) && $(GCC_SRC_DIR)/configure \
-		   --target=$(TARGET) \
-		   --prefix=$(TOOLCHAIN_ROOT) \
-		   --with-sysroot=$(SYSROOT) \
-		   --with-native-system-header-dir=/usr/include \
-		   --enable-languages=c$(COMMA)c++ \
-		   --disable-nls \
-		   --disable-multilib \
+               cd $(GCC_BUILD_DIR) && $(GCC_SRC_DIR)/configure \
+                  --target=$(TARGET) \
+                  --prefix=$(TOOLCHAIN_ROOT) \
+                  --with-sysroot=$(SYSROOT) \
+                  --enable-languages=c$(COMMA)c++ \
+                  --disable-nls \
+                  --disable-multilib \
 		   --disable-libsanitizer \
 		   --disable-libitm \
 		   --disable-libstdcxx-backtrace \

@@ -40,17 +40,16 @@ $(GCC_BUILD_DIR)/.built-stage1: $(GCC_STAMP)
 		cd $(GCC_SRC_DIR) && ./contrib/download_prerequisites, \
 		gcc-stage1-prereqs)
 
-	$(call do_step,CONFIG,gcc-stage1, \
-	cd $(GCC_BUILD_DIR) && $(GCC_SRC_DIR)/configure \
-	--target=$(TARGET) \
-	--prefix=$(STAGE1_TOOLCHAIN_ROOT) \
-	--with-sysroot=$(STAGE1_SYSROOT) \
-		--with-newlib \
-		--with-native-system-header-dir=/usr/include \
-		--without-headers \
-		--disable-nls \
-		--disable-shared \
-		--disable-threads \
+$(call do_step,CONFIG,gcc-stage1, \
+cd $(GCC_BUILD_DIR) && $(GCC_SRC_DIR)/configure \
+--target=$(TARGET) \
+--prefix=$(STAGE1_TOOLCHAIN_ROOT) \
+--with-sysroot=$(STAGE1_SYSROOT) \
+--with-newlib \
+--without-headers \
+--disable-nls \
+--disable-shared \
+--disable-threads \
 		--disable-libmudflap \
 		--disable-decimal-float \
 		--disable-libatomic \

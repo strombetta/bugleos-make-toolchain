@@ -38,10 +38,14 @@ TARGET ?= $(if $(HOST_TARGET),$(HOST_TARGET),$(error Unsupported host architectu
 
 TOOLCHAIN_ROOT ?= $(OUT_DIR)/toolchain
 TOOLCHAIN ?= $(TOOLCHAIN_ROOT)/$(TARGET)
+# Stage1 bootstrap toolchain and sysroot remain isolated to avoid leaking
+# temporary artifacts into the final deliverable.
 STAGE1_TOOLCHAIN_ROOT ?= $(OUT_DIR)/toolchain-stage1
 STAGE1_TOOLCHAIN ?= $(STAGE1_TOOLCHAIN_ROOT)/$(TARGET)
 STAGE1_SYSROOT ?= $(OUT_DIR)/sysroot-stage1/$(TARGET)
-SYSROOT ?= $(OUT_DIR)/sysroot/$(TARGET)
+# The final, relocatable sysroot lives directly under the target triplet
+# inside the final toolchain prefix.
+SYSROOT ?= $(TOOLCHAIN)
 
 JOBS ?= $(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
 
