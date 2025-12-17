@@ -57,6 +57,7 @@ $(MUSL_BUILD_DIR)/.built-musl: $(MUSL_STAMP)
 		musl-build)
 
 	$(call do_step,INSTALL,musl, \
+		PATH="$(STAGE1_TOOLCHAIN_ROOT)/bin:$$PATH" && \
 		$(MAKE) -C "$(MUSL_BUILD_DIR)" DESTDIR="$(SYSROOT)" install, \
 		musl-install)
 
@@ -66,7 +67,7 @@ $(MUSL_BUILD_DIR)/.built-musl: $(MUSL_STAMP)
 		test -f "$(SYSROOT)/usr/include/unistd.h" && \
 		test -f "$(SYSROOT)/usr/include/errno.h" && \
 		test -f "$(SYSROOT)/usr/include/pthread.h" && \
-		( test -f "$(SYSROOT)/lib/ld-musl-aarch64.so.1" || test -f "$(SYSROOT)/usr/lib/ld-musl-aarch64.so.1" ) && \
+		( test -f "$(SYSROOT)/lib/$(MUSL_LDSO)" || test -f "$(SYSROOT)/usr/lib/$(MUSL_LDSO)" ) && \
 		( test -f "$(SYSROOT)/lib/crt1.o" || test -f "$(SYSROOT)/usr/lib/crt1.o" ) && \
 		( test -f "$(SYSROOT)/lib/crti.o" || test -f "$(SYSROOT)/usr/lib/crti.o" ) && \
 		( test -f "$(SYSROOT)/lib/crtn.o" || test -f "$(SYSROOT)/usr/lib/crtn.o" ) && \

@@ -34,7 +34,11 @@ HOST_TARGET := $(shell \
   else echo; \
   fi)
 
-TARGET ?= $(if $(HOST_TARGET),$(HOST_TARGET),$(error Unsupported host architecture '$(HOST_ARCH)'; please set TARGET explicitly))
+TARGET      ?= $(if $(HOST_TARGET),$(HOST_TARGET),$(error Unsupported host architecture '$(HOST_ARCH)'; please set TARGET explicitly))
+TARGET_ARCH := $(firstword $(subst -, ,$(TARGET)))
+
+MUSL_LDSO   := ld-musl-$(TARGET_ARCH).so.1
+
 
 TOOLCHAIN_ROOT ?= $(OUT_DIR)/toolchain
 TOOLCHAIN ?= $(TOOLCHAIN_ROOT)/$(TARGET)
