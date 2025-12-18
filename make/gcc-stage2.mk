@@ -50,6 +50,7 @@ $(GCC_BUILD_DIR)/.built-gcc-stage2: $(GCC_STAMP)
 				--prefix="$(TOOLCHAIN_ROOT)" \
 				--with-sysroot="$(SYSROOT)" \
 				--with-native-system-header-dir=/usr/include \
+				--with-headers="$(SYSROOT)/usr/include" \
 				--enable-languages=c$(COMMA)c++ \
 				--disable-nls \
 				--disable-multilib \
