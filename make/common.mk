@@ -53,8 +53,9 @@ endef
 
 # Escape backslashes and double-quotes for safe use inside: sh -c "<cmd>"
 define sh_escape
-	$(subst \,\\,$(subst ",\",$(1)))
+$(subst \,\\,$(subst ",\",$(subst $(newline),; ,$(1))))
 endef
+newline := '\n'
 
 # $(call with_host_env, COMMAND) Host-only, deterministic PATH
 define with_host_env
