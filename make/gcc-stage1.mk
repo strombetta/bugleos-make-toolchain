@@ -37,81 +37,67 @@ $(GCC_BUILD_DIR)/.built-stage1: $(GCC_STAMP)
 		gcc-stage1-extract)
 
 	$(call do_step,EXTRACT,gcc-stage1-prerequisites, \
-		cd $(GCC_SRC_DIR) && ./contrib/download_prerequisites, \
+		$(call with_host_env, cd "$(GCC_SRC_DIR)" && ./contrib/download_prerequisites), \
 		gcc-stage1-prereqs)
 
 	$(call do_step,CONFIG,gcc-stage1, \
-		PATH="/usr/bin:/bin:$(STAGE1_TOOLCHAIN_ROOT)/bin:$$PATH" \
-		CC="gcc" \
-		AR="/usr/bin/ar" \
-		AS="/usr/bin/as" \
-		LD="/usr/bin/ld" \
-		NM="/usr/bin/nm" \
-		OBJCOPY="/usr/bin/objcopy" \
-		OBJDUMP="/usr/bin/objdump" \
-		RANLIB="/usr/bin/ranlib" \
-		READELF="/usr/bin/readelf" \
-		STRIP="/usr/bin/strip" \
-		cd "$(GCC_BUILD_DIR)" && "$(GCC_SRC_DIR)/configure" \
-			--target="$(TARGET)" \
-			--prefix="$(STAGE1_TOOLCHAIN_ROOT)" \
-			--with-sysroot="$(STAGE1_SYSROOT)" \
-			--with-newlib \
-			--without-headers \
-			--disable-nls \
-			--disable-shared \
-			--disable-threads \
-			--disable-libmudflap \
-			--disable-decimal-float \
-			--disable-libatomic \
-			--disable-libgomp \
-			--disable-libquadmath \
-			--disable-libssp \
-			--disable-libvtv \
-			--disable-multilib \
-			--enable-languages=c \
-			--enable-checking=release \
-			AR_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-ar" \
-			AS_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-as" \
-			LD_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-ld" \
-			NM_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-nm" \
-			OBJCOPY_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-objcopy" \
-			OBJDUMP_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-objdump" \
-			RANLIB_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-ranlib" \
-			READELF_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-readelf" \
-			STRIP_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-strip", \
+		$(call with_host_env, \
+			cd "$(GCC_BUILD_DIR)" && \
+			CC="gcc" \
+			AR="/usr/bin/ar" \
+			AS="/usr/bin/as" \
+			LD="/usr/bin/ld" \
+			NM="/usr/bin/nm" \
+			OBJCOPY="/usr/bin/objcopy" \
+			OBJDUMP="/usr/bin/objdump" \
+			RANLIB="/usr/bin/ranlib" \
+			READELF="/usr/bin/readelf" \
+			STRIP="/usr/bin/strip" \
+			"$(GCC_SRC_DIR)/configure" \
+				--target="$(TARGET)" \
+				--prefix="$(STAGE1_TOOLCHAIN_ROOT)" \
+				--with-sysroot="$(STAGE1_SYSROOT)" \
+				--with-newlib \
+				--without-headers \
+				--disable-nls \
+				--disable-shared \
+				--disable-threads \
+				--disable-libmudflap \
+				--disable-decimal-float \
+				--disable-libatomic \
+				--disable-libgomp \
+				--disable-libquadmath \
+				--disable-libssp \
+				--disable-libvtv \
+				--disable-multilib \
+				--enable-languages=c \
+				--enable-checking=release \
+				AR_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-ar" \
+				AS_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-as" \
+				LD_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-ld" \
+				NM_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-nm" \
+				OBJCOPY_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-objcopy" \
+				OBJDUMP_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-objdump" \
+				RANLIB_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-ranlib" \
+				READELF_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-readelf" \
+				STRIP_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-strip), \
 		gcc-stage1-configure)
 
+
 	$(call do_step,BUILD,gcc-stage1, \
-		PATH="/usr/bin:/bin:$(STAGE1_TOOLCHAIN_ROOT)/bin:$$PATH" \
-		AR="/usr/bin/ar" \
-		AS="/usr/bin/as" \
-		LD="/usr/bin/ld" \
-		NM="/usr/bin/nm" \
-		RANLIB="/usr/bin/ranlib" \
-		STRIP="/usr/bin/strip" \
-		$(MAKE) -C "$(GCC_BUILD_DIR)" -j"$(JOBS)" all-gcc, \
+		$(call with_host_env, $(MAKE) -C "$(GCC_BUILD_DIR)" -j"$(JOBS)" all-gcc), \
 		gcc-stage1-build)
 
 	$(call do_step,BUILD,gcc-stage1-libgcc, \
-		PATH="/usr/bin:/bin:$(STAGE1_TOOLCHAIN_ROOT)/bin:$$PATH" \
-		AR="/usr/bin/ar" \
-		AS="/usr/bin/as" \
-		LD="/usr/bin/ld" \
-		NM="/usr/bin/nm" \
-		RANLIB="/usr/bin/ranlib" \
-		STRIP="/usr/bin/strip" \
-		$(MAKE) -C "$(GCC_BUILD_DIR)" -j"$(JOBS)" all-target-libgcc, \
+		$(call with_host_env, $(MAKE) -C "$(GCC_BUILD_DIR)" -j"$(JOBS)" all-target-libgcc), \
 		gcc-stage1-libgcc-build)
 
 	$(call do_step,INSTALL,gcc-stage1, \
-		PATH="$(STAGE1_TOOLCHAIN_ROOT)/bin:$$PATH" && \
-		$(MAKE) -C $(GCC_BUILD_DIR) install-gcc, \
+		$(call with_host_env, $(MAKE) -C "$(GCC_BUILD_DIR)" install-gcc), \
 		gcc-stage1-install)
 
 	$(call do_step,INSTALL,gcc-stage1-libgcc, \
-		PATH="$(STAGE1_TOOLCHAIN_ROOT)/bin:$$PATH" && \
-		$(MAKE) -C $(GCC_BUILD_DIR) install-target-libgcc, \
+		$(call with_host_env, $(MAKE) -C "$(GCC_BUILD_DIR)" install-target-libgcc), \
 		gcc-stage1-libgcc-install)
 
 	$(call do_step,CHECK,gcc-stage1, \
