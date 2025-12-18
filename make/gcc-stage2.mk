@@ -51,6 +51,7 @@ $(GCC_BUILD_DIR)/.built-gcc-stage2: $(GCC_STAMP)
 				--with-sysroot="$(SYSROOT)" \
 				--with-native-system-header-dir=/usr/include \
 				--with-headers="$(SYSROOT)/usr/include" \
+				--with-build-sysroot="$(SYSROOT)" \
 				--enable-languages=c$(COMMA)c++ \
 				--disable-nls \
 				--disable-multilib \
