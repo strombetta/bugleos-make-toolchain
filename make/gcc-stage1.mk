@@ -43,16 +43,6 @@ $(GCC_BUILD_DIR)/.built-stage1: $(GCC_STAMP)
 	$(call do_step,CONFIG,gcc-stage1, \
 		$(call with_host_env, \
 			cd "$(GCC_BUILD_DIR)" && \
-			CC="gcc" \
-			AR="/usr/bin/ar" \
-			AS="/usr/bin/as" \
-			LD="/usr/bin/ld" \
-			NM="/usr/bin/nm" \
-			OBJCOPY="/usr/bin/objcopy" \
-			OBJDUMP="/usr/bin/objdump" \
-			RANLIB="/usr/bin/ranlib" \
-			READELF="/usr/bin/readelf" \
-			STRIP="/usr/bin/strip" \
 			"$(GCC_SRC_DIR)/configure" \
 				--target="$(TARGET)" \
 				--prefix="$(STAGE1_TOOLCHAIN_ROOT)" \
@@ -80,9 +70,9 @@ $(GCC_BUILD_DIR)/.built-stage1: $(GCC_STAMP)
 				OBJDUMP_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-objdump" \
 				RANLIB_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-ranlib" \
 				READELF_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-readelf" \
-				STRIP_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-strip), \
+				STRIP_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-strip" \
+		), \
 		gcc-stage1-configure)
-
 
 	$(call do_step,BUILD,gcc-stage1, \
 		$(call with_host_env, $(MAKE) -C "$(GCC_BUILD_DIR)" -j"$(JOBS)" all-gcc), \
