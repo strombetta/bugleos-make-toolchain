@@ -29,41 +29,48 @@ all: binutils-stage2
 binutils-stage2: ensure-dirs $(BINUTILS2_BUILD_DIR)/.built-stage2
 
 $(BINUTILS2_BUILD_DIR)/.built-stage2: $(BINUTILS_STAMP)
-	$(Q)rm -rf $(BINUTILS2_BUILD_DIR)
-	$(Q)mkdir -p $(BINUTILS2_BUILD_DIR)
+	$(Q)rm -rf "$(BINUTILS2_BUILD_DIR)"
+	$(Q)mkdir -p "$(BINUTILS2_BUILD_DIR)"
 
 	$(call do_step,EXTRACT,binutils-stage2, \
 		$(MAKE) -f $(THIS_MAKEFILE) unpack-binutils, \
 		binutils-stage2-extract)
 
 	$(call do_step,CONFIG,binutils-stage2, \
-		PATH="$(STAGE1_TOOLCHAIN_ROOT)/bin:$$PATH" && \
-		cd $(BINUTILS2_BUILD_DIR) && $(BINUTILS_SRC_DIR)/configure \
-		--target=$(TARGET) \
-		--prefix=$(TOOLCHAIN_ROOT) \
-		--with-sysroot=$(SYSROOT) \
-		--disable-nls \
-		--disable-werror \
-		--enable-deterministic-archives, \
+		$(call with_cross_env, \
+			cd "$(BINUTILS2_BUILD_DIR)" && \
+			"$(BINUTILS_SRC_DIR)/configure" \
+				--target="$(TARGET)" \
+				--prefix="$(TOOLCHAIN_ROOT)" \
+				--with-sysroot="$(SYSROOT)" \
+				--disable-nls \
+				--disable-werror \
+				--enable-deterministic-archives \
+		), \
 		binutils-stage2-configure)
 
 	$(call do_step,BUILD,binutils-stage2, \
-		PATH="$(STAGE1_TOOLCHAIN_ROOT)/bin:$$PATH" && \
-		$(MAKE) -C $(BINUTILS2_BUILD_DIR) -j$(JOBS), \
-	binutils-stage2-build)
+		$(call with_cross_env, \
+			$(MAKE) -C "$(BINUTILS2_BUILD_DIR)" -j"$(JOBS)" \
+		), \
+		binutils-stage2-build)
 
 	$(call do_step,INSTALL,binutils-stage2, \
-		$(MAKE) -C $(BINUTILS2_BUILD_DIR) install, \
-	binutils-stage2-install)
+		$(call with_cross_env, \
+			$(MAKE) -C "$(BINUTILS2_BUILD_DIR)" install \
+		), \
+		binutils-stage2-install)
 
 	$(call do_step,CHECK,binutils-stage2, \
-		sh -eu -c '\
-			test -x "$(TOOLCHAIN_ROOT)/bin/$(TARGET)-ld"; \
-			test -x "$(TOOLCHAIN_ROOT)/bin/$(TARGET)-as"; \
-			test -x "$(TOOLCHAIN_ROOT)/bin/$(TARGET)-ar"; \
-			"$(TOOLCHAIN_ROOT)/bin/$(TARGET)-ld" -v >/dev/null 2>&1; \
-			"$(TOOLCHAIN_ROOT)/bin/$(TARGET)-as" --version >/dev/null 2>&1; \
-			"$(TOOLCHAIN_ROOT)/bin/$(TARGET)-ar" --version >/dev/null 2>&1', \
+		$(call with_host_env, \
+			sh -eu -c '\
+				test -x "$(TOOLCHAIN_ROOT)/bin/$(TARGET)-ld"; \
+				test -x "$(TOOLCHAIN_ROOT)/bin/$(TARGET)-as"; \
+				test -x "$(TOOLCHAIN_ROOT)/bin/$(TARGET)-ar"; \
+				"$(TOOLCHAIN_ROOT)/bin/$(TARGET)-ld" -v >/dev/null 2>&1; \
+				"$(TOOLCHAIN_ROOT)/bin/$(TARGET)-as" --version >/dev/null 2>&1; \
+				"$(TOOLCHAIN_ROOT)/bin/$(TARGET)-ar" --version >/dev/null 2>&1' \
+		), \
 		binutils-stage2-check)
 
 	$(Q)touch $@
