@@ -37,23 +37,15 @@ TARGET      ?= $(if $(HOST_TARGET),$(HOST_TARGET),$(error Unsupported host archi
 TARGET_ARCH := $(firstword $(subst -, ,$(TARGET)))
 MUSL_LDSO   := ld-musl-$(TARGET_ARCH).so.1
 
-# PATH baseline (host tools)
 HOST_PATH := /usr/bin:/bin:$(PATH)
-# PATH to discover cross tools (prefixed) when needed
-CROSS_PATH := \
-	$(TOOLCHAIN_ROOT)/bin:$(TOOLCHAIN_TARGET_DIR)/bin: \
-  $(STAGE1_TOOLCHAIN_ROOT)/bin:$(STAGE1_TOOLCHAIN_ROOT)/$(TARGET)/bin
-
+CROSS_PATH := $(TOOLCHAIN_ROOT)/bin:$(TOOLCHAIN_TARGET_DIR)/bin:$(STAGE1_TOOLCHAIN_ROOT)/bin:$(STAGE1_TOOLCHAIN_ROOT)/$(TARGET)/bin
 
 TOOLCHAIN_ROOT ?= $(OUT_DIR)/toolchain
-# Stage1 bootstrap toolchain and sysroot remain isolated to avoid leaking
-# temporary artifacts into the final deliverable.
+TOOLCHAIN_TARGET_DIR ?= $(TOOLCHAIN_ROOT)/$(TARGET)
+SYSROOT ?= $(TOOLCHAIN_TARGET_DIR)/sysroot
+
 STAGE1_TOOLCHAIN_ROOT ?= $(OUT_DIR)/toolchain-stage1
 STAGE1_SYSROOT        ?= $(OUT_DIR)/sysroot-stage1/$(TARGET)
-# Final, relocatable sysroot is separate from toolchain prefix.
-SYSROOT ?= $(OUT_DIR)/sysroot/$(TARGET)
-# Convenience (optional): where target-specific files live in the toolchain prefix, if needed.
-TOOLCHAIN_TARGET_DIR ?= $(TOOLCHAIN_ROOT)/$(TARGET)
 
 JOBS ?= $(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
 
