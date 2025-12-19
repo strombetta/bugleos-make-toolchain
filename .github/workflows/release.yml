@@ -81,10 +81,7 @@ jobs:
           label="${{ matrix.label }}"
           tarball="bugleos-toolchain-${version}-${label}.tar.gz"
           include_paths=("out/toolchain")
-          # if [ -d "out/sysroot/${triple}" ]; then
-          #   include_paths+=("out/sysroot/${triple}")
-          # fi
-          tar -czf "dist/${tarball}" "${include_paths[@]}"
+          tar -C "out/toolchain/" -czf "dist/${tarball}" "${include_paths[@]}"
           echo "TARBALL_PATH=dist/${tarball}" >> "$GITHUB_ENV"
 
       - name: Upload tarball artifact
