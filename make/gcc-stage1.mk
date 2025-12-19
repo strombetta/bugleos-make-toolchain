@@ -32,17 +32,15 @@ $(GCC_BUILD_DIR)/.built-stage1: $(GCC_STAMP)
 	$(Q)rm -rf $(GCC_BUILD_DIR)
 	$(Q)mkdir -p $(GCC_BUILD_DIR)
 
-	$(call do_step,EXTRACT,gcc-stage1, \
-		$(MAKE) -f $(THIS_MAKEFILE) unpack-gcc, \
+	$(call do_step,EXTRACT,gcc-stage1, $(MAKE) -f $(THIS_MAKEFILE) unpack-gcc, \
 		gcc-stage1-extract)
 
 	$(call do_step,EXTRACT,gcc-stage1-prerequisites, \
-		$(call with_host_env, cd "$(GCC_SRC_DIR)" && ./contrib/download_prerequisites), \
+		$(call with_host_env,cd "$(GCC_SRC_DIR)" && ./contrib/download_prerequisites), \
 		gcc-stage1-prereqs)
 
 	$(call do_step,CONFIG,gcc-stage1, \
-		$(call with_host_env, \
-			cd "$(GCC_BUILD_DIR)" && \
+		$(call with_host_env,cd "$(GCC_BUILD_DIR)" && \
 			"$(GCC_SRC_DIR)/configure" \
 				--target="$(TARGET)" \
 				--prefix="$(STAGE1_TOOLCHAIN_ROOT)" \
@@ -70,8 +68,7 @@ $(GCC_BUILD_DIR)/.built-stage1: $(GCC_STAMP)
 				OBJDUMP_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-objdump" \
 				RANLIB_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-ranlib" \
 				READELF_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-readelf" \
-				STRIP_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-strip" \
-		), \
+				STRIP_FOR_TARGET="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-strip"), \
 		gcc-stage1-configure)
 
 	$(call do_step,BUILD,gcc-stage1, \
