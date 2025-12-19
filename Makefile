@@ -60,15 +60,11 @@ binutils-stage2:
 gcc-stage2:
 	@$(MAKE) -f make/gcc-stage2.mk TARGET=$(TARGET) gcc-stage2
 
-metadata:
-	@ROOT_DIR=$(ROOT_DIR) TARGET=$(TARGET) TOOLCHAIN_ROOT=$(TOOLCHAIN_ROOT) TOOLCHAIN=$(TOOLCHAIN) SYSROOT=$(SYSROOT) \
-$(ROOT_DIR)/scripts/gen-metadata.sh
-
 verify-toolchain: guard-TARGET
 	@ROOT_DIR=$(ROOT_DIR) TARGET=$(TARGET) TOOLCHAIN_ROOT=$(TOOLCHAIN_ROOT) TOOLCHAIN=$(TOOLCHAIN) SYSROOT=$(SYSROOT) \
 $(ROOT_DIR)/scripts/verify-toolchain.sh
 
-toolchain: binutils-stage1 gcc-stage1 musl binutils-stage2 gcc-stage2 metadata
+toolchain: binutils-stage1 gcc-stage1 musl binutils-stage2 gcc-stage2
 
 clean:
 	@rm -rf $(BUILDS_DIR) $(LOGS_DIR)
