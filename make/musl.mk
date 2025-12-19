@@ -37,8 +37,7 @@ $(MUSL_BUILD_DIR)/.built-musl: $(MUSL_STAMP)
 		musl-extract)
 
 	$(call do_step,CONFIG,musl, \
-		$(call with_cross_env, \
-			cd "$(MUSL_BUILD_DIR)" && \
+		$(call with_cross_env,cd "$(MUSL_BUILD_DIR)" && \
 			"$(MUSL_SRC_DIR)/configure" \
 				CC="$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-gcc" \
 				--prefix=/usr \
@@ -49,18 +48,15 @@ $(MUSL_BUILD_DIR)/.built-musl: $(MUSL_STAMP)
 		musl-configure)
 
 	$(call do_step,INSTALL,musl-headers, \
-		$(call with_cross_env, \
-			$(MAKE) -C "$(MUSL_BUILD_DIR)" DESTDIR="$(SYSROOT)" install-headers), \
+		$(call with_cross_env,$(MAKE) -C "$(MUSL_BUILD_DIR)" DESTDIR="$(SYSROOT)" install-headers), \
 		musl-headers)
 
 	$(call do_step,BUILD,musl, \
-		$(call with_cross_env, \
-			$(MAKE) -C "$(MUSL_BUILD_DIR)" -j"$(JOBS)" CROSS_COMPILE="$(TARGET)-"), \
+		$(call with_cross_env,$(MAKE) -C "$(MUSL_BUILD_DIR)" -j"$(JOBS)" CROSS_COMPILE="$(TARGET)-"), \
 		musl-build)
 
 	$(call do_step,INSTALL,musl, \
-		$(call with_cross_env, \
-			$(MAKE) -C "$(MUSL_BUILD_DIR)" DESTDIR="$(SYSROOT)" install), \
+		$(call with_cross_env,$(MAKE) -C "$(MUSL_BUILD_DIR)" DESTDIR="$(SYSROOT)" install), \
 		musl-install)
 
 	$(call do_step,INSTALL,musl-fix-ldso-symlink, \
