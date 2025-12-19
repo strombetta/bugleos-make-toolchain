@@ -80,8 +80,7 @@ jobs:
           triple="${{ matrix.triple }}"
           label="${{ matrix.label }}"
           tarball="bugleos-toolchain-${version}-${label}.tar.gz"
-          include_paths=("out/toolchain")
-          tar -C "out/toolchain/" -czf "dist/${tarball}" "${include_paths[@]}"
+          tar -C "out/toolchain" -czf "dist/${tarball}" .
           echo "TARBALL_PATH=dist/${tarball}" >> "$GITHUB_ENV"
 
       - name: Upload tarball artifact
