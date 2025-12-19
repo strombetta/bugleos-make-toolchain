@@ -45,7 +45,7 @@ TOOLCHAIN_TARGET_DIR ?= $(TOOLCHAIN_ROOT)/$(TARGET)
 SYSROOT ?= $(TOOLCHAIN_TARGET_DIR)/sysroot
 
 STAGE1_TOOLCHAIN_ROOT ?= $(OUT_DIR)/toolchain-stage1
-STAGE1_SYSROOT        ?= $(OUT_DIR)/sysroot-stage1/$(TARGET)
+STAGE1_SYSROOT ?= $(STAGE1_TOOLCHAIN_ROOT)/sysroot
 
 JOBS ?= $(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
 
