@@ -68,10 +68,12 @@ fetch() {
 BINUTILS_VERSION=$(version_of BINUTILS_VERSION)
 GCC_VERSION=$(version_of GCC_VERSION)
 MUSL_VERSION=$(version_of MUSL_VERSION)
+LINUX_VERSION=$(version_of LINUX_VERSION)
 
 BINUTILS_URL=$(url_of BINUTILS_URL)
 GCC_URL=$(url_of GCC_URL)
 MUSL_URL=$(url_of MUSL_URL)
+LINUX_URL=$(url_of LINUX_URL)
 BINUTILS_SIG_URL=$(url_of BINUTILS_SIG_URL)
 GCC_SIG_URL=$(url_of GCC_SIG_URL)
 MUSL_SIG_URL=$(url_of MUSL_SIG_URL)
@@ -96,10 +98,15 @@ fetch_musl() {
   fetch "musl.pub" "$(expand_url "$MUSL_PUBKEY_URL")"
 }
 
+fetch_linux() {
+  fetch "linux-${LINUX_VERSION}.tar.xz" "$(expand_url "$LINUX_URL")"
+}
+
 fetch_all() {
   fetch_binutils
   fetch_gcc
   fetch_musl
+  fetch_linux
 }
 
 if [[ $# -eq 0 ]]; then
@@ -111,6 +118,7 @@ for component in "$@"; do
     binutils) fetch_binutils ;;
     gcc) fetch_gcc ;;
     musl) fetch_musl ;;
+    linux) fetch_linux ;;
     all) fetch_all ;;
     *) echo "Unknown component: $component" >&2; exit 1 ;;
   esac

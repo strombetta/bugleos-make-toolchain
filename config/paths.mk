@@ -35,6 +35,13 @@ HOST_TARGET := $(shell \
   fi)
 TARGET      ?= $(if $(HOST_TARGET),$(HOST_TARGET),$(error Unsupported host architecture '$(HOST_ARCH)'; please set TARGET explicitly))
 TARGET_ARCH := $(firstword $(subst -, ,$(TARGET)))
+ifeq ($(TARGET_ARCH),x86_64)
+LINUX_ARCH := x86
+else ifeq ($(TARGET_ARCH),aarch64)
+LINUX_ARCH := arm64
+else
+LINUX_ARCH := $(TARGET_ARCH)
+endif
 MUSL_LDSO   := ld-musl-$(TARGET_ARCH).so.1
 
 HOST_PATH := /usr/bin:/bin:$(PATH)

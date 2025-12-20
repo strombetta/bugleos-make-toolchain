@@ -19,23 +19,38 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-BINUTILS_VERSION := 2.45.1
-BINUTILS_URL := https://ftp.gnu.org/gnu/binutils/binutils-$(BINUTILS_VERSION).tar.xz
-BINUTILS_SIG_URL := https://ftp.gnu.org/gnu/binutils/binutils-$(BINUTILS_VERSION).tar.xz.sig
-BINUTILS_SHA256 := 5fe101e6fe9d18fdec95962d81ed670fdee5f37e3f48f0bef87bddf862513aa5
+THIS_MAKEFILE := $(lastword $(MAKEFILE_LIST))
+include $(abspath $(dir $(THIS_MAKEFILE))/common.mk)
 
-GCC_VERSION := 15.2.0
-GCC_URL := https://ftp.gnu.org/gnu/gcc/gcc-$(GCC_VERSION)/gcc-$(GCC_VERSION).tar.xz
-GCC_SIG_URL := https://ftp.gnu.org/gnu/gcc/gcc-$(GCC_VERSION)/gcc-$(GCC_VERSION).tar.xz.sig
-GCC_SHA256 := 438fd996826b0c82485a29da03a72d71d6e3541a83ec702df4271f6fe025d24e
-GNU_KEYRING_URL := https://ftp.gnu.org/gnu/gnu-keyring.gpg
+.PHONY: all
+all: linux-headers
 
-MUSL_VERSION := 1.2.4
-MUSL_URL := https://musl.libc.org/releases/musl-$(MUSL_VERSION).tar.gz
-MUSL_SIG_URL := https://musl.libc.org/releases/musl-$(MUSL_VERSION).tar.gz.asc
-MUSL_SHA256 := 7a35eae33d5372a7c0da1188de798726f68825513b7ae3ebe97aaaa52114f039
-MUSL_PUBKEY_URL := https://musl.libc.org/musl.pub
+.PHONY: linux-headers
+linux-headers: ensure-dirs $(LINUX_HEADERS_BUILD_DIR)/.built-linux-headers
 
-LINUX_VERSION := 6.6.0
-LINUX_URL := https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-$(LINUX_VERSION).tar.xz
-LINUX_SHA256 := SHA256_PLACEHOLDER
+$(LINUX_HEADERS_BUILD_DIR)/.built-linux-headers: $(LINUX_STAMP)
+	$(Q)rm -rf "$(LINUX_HEADERS_BUILD_DIR)"
+	$(Q)mkdir -p "$(LINUX_HEADERS_BUILD_DIR)"
+
+	$(call do_step,EXTRACT,linux-headers, \
+		$(MAKE) -f "$(THIS_MAKEFILE)" unpack-linux, \
+		linux-headers-extract)
+
+	$(call do_step,INSTALL,linux-headers, \
+		$(call with_host_env, \
+			$(MAKE) -C "$(LINUX_SRC_DIR)" O="$(LINUX_HEADERS_BUILD_DIR)" \
+				ARCH="$(LINUX_ARCH)" \
+				INSTALL_HDR_PATH="$(SYSROOT)/usr" \
+				headers_install \
+		), \
+		linux-headers-install)
+
+	$(call do_step,CHECK,linux-headers, \
+		$(call with_host_env, \
+			set -eu; \
+			test -f "$(SYSROOT)/usr/include/linux/version.h"; \
+			test -f "$(SYSROOT)/usr/include/asm/unistd.h" || test -f "$(SYSROOT)/usr/include/asm-generic/unistd.h"; \
+		), \
+		linux-headers-check)
+
+	$(Q)touch $@

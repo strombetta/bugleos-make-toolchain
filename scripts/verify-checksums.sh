@@ -32,10 +32,12 @@ value_of() {
 BINUTILS_VERSION=$(value_of BINUTILS_VERSION)
 GCC_VERSION=$(value_of GCC_VERSION)
 MUSL_VERSION=$(value_of MUSL_VERSION)
+LINUX_VERSION=$(value_of LINUX_VERSION)
 
 BINUTILS_SHA=$(value_of BINUTILS_SHA256)
 GCC_SHA=$(value_of GCC_SHA256)
 MUSL_SHA=$(value_of MUSL_SHA256)
+LINUX_SHA=$(value_of LINUX_SHA256)
 
 ensure_checksum_set() {
   local name="$1"
@@ -127,10 +129,18 @@ verify_musl() {
   verify_checksum "$MUSL_SHA" "musl-${MUSL_VERSION}.tar.gz"
 }
 
+verify_linux() {
+  ensure_checksum_set "linux" "$LINUX_SHA"
+  ensure_file_present "$DOWNLOADS_DIR/linux-${LINUX_VERSION}.tar.xz" "linux source archive"
+  echo "Verifying Linux headers checksum..."
+  verify_checksum "$LINUX_SHA" "linux-${LINUX_VERSION}.tar.xz"
+}
+
 verify_all() {
   verify_binutils
   verify_gcc
   verify_musl
+  verify_linux
 }
 
 if [[ $# -eq 0 ]]; then
@@ -142,6 +152,7 @@ for component in "$@"; do
     binutils) verify_binutils ;;
     gcc) verify_gcc ;;
     musl) verify_musl ;;
+    linux) verify_linux ;;
     all) verify_all ;;
     *) echo "Unknown component: $component" >&2; exit 1 ;;
   esac
