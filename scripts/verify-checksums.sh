@@ -173,12 +173,12 @@ verify_binutils() {
 verify_linux() {
   ensure_checksum_set "linux" "$LINUX_SHA"
   ensure_file_present "$DOWNLOADS_DIR/$SIG_LINUX" "Linux headers signature file"
-  ensure_file_present "$DOWNLOADS_DIR/linux-${LINUX_VERSION}.tar.gz" "linux source archive"
+  ensure_file_present "$DOWNLOADS_DIR/linux-${LINUX_VERSION}.tar.xz" "linux source archive"
   import_linux_keyring
   echo "Verifying Linux headers signature..."
-  verify_signature "$SIG_LINUX" "linux-${LINUX_VERSION}.tar.gz"
+  verify_signature "$SIG_LINUX" "linux-${LINUX_VERSION}.tar.xz"
   echo "Verifying Linux headers checksum..."
-  verify_checksum "$LINUX_SHA" "linux-${LINUX_VERSION}.tar.gz"
+  verify_checksum "$LINUX_SHA" "linux-${LINUX_VERSION}.tar.xz"
 }
 
 verify_gcc() {
