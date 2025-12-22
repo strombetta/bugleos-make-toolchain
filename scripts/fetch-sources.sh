@@ -74,6 +74,7 @@ BINUTILS_URL=$(url_of BINUTILS_URL)
 BINUTILS_SIG_URL=$(url_of BINUTILS_SIG_URL)
 LINUX_URL=$(url_of LINUX_URL)
 LINUX_SIG_URL=$(url_of LINUX_SIG_URL)
+LINUX_KEYRING_URL=$(url_of LINUX_KEYRING_URL)
 GCC_URL=$(url_of GCC_URL)
 GCC_SIG_URL=$(url_of GCC_SIG_URL)
 GNU_KEYRING_URL=$(url_of GNU_KEYRING_URL)
@@ -90,6 +91,7 @@ fetch_binutils() {
 fetch_linux() {
   fetch "linux-${LINUX_VERSION}.tar.gz" "$(expand_url "$LINUX_URL")"
   fetch "linux-${LINUX_VERSION}.tar.sign" "$(expand_url "$LINUX_SIG_URL")"
+  fetch "linux-keyring.gpg" "$(expand_url "$LINUX_KEYRING_URL")"
 }
 
 fetch_gcc() {

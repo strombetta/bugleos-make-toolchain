@@ -28,19 +28,19 @@ WITH_LINUX_HEADERS ?= 0
 ARCHES := aarch64 x86_64
 load_target = $(strip $(shell awk -F':=' '/^TARGET/ {gsub(/[ \t]/,"",$$2);print $$2}' config/arch/$(1).mk))
 
-.PHONY: $(ARCHES) toolchain binutils-stage1 gcc-stage1 musl linux-headers binutils-stage2 gcc-stage2 metadata verify-toolchain clean distclean check help sanity
+.PHONY: $(ARCHES) toolchain binutils-stage1 linux-headers gcc-stage1 musl binutils-stage2 gcc-stage2 verify-toolchain clean distclean check help sanity
 
 help:
-	@echo "BugleOS Cross-toolchain builder"
+	@echo "BugleOS Cross-compiling Toolchain Builder"
 	@echo
 	@echo "Targets:"
-	@echo "  make x86_64        Build BugleOS cross-toolchain for x86_64 architecture"
-	@echo "  make aarch64       Build BugleOS cross-toolchain for aarch64 architecture"
+	@echo "  make help          Show this help message"
+	@echo "  make toolchain	 	 Build BugleOS cross-compiling toolchain for host architecture"
+	@echo "  make x86_64        Build BugleOS cross-compiling toolchain for x86_64 architecture"
+	@echo "  make aarch64       Build BugleOS cross-compiling toolchain for aarch64 architecture"
 	@echo "  make clean         Remove builds and logs"
 	@echo "  make distclean     Full cleanup"
 	@echo "  make check TARGET=<triplet>  Sanity-check an existing toolchain"
-	@echo "  make WITH_LINUX_HEADERS=1 <arch>  Build toolchain with Linux UAPI headers"
-	@echo "  make linux-headers Build Linux UAPI headers into the sysroot"
 
 $(ARCHES):
 	@$(MAKE) TARGET=$(call load_target,$@) toolchain

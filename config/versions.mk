@@ -27,6 +27,8 @@ BINUTILS_SHA256 := 5fe101e6fe9d18fdec95962d81ed670fdee5f37e3f48f0bef87bddf862513
 LINUX_VERSION := 6.18
 LINUX_URL := https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-$(LINUX_VERSION).tar.gz
 LINUX_SIG_URL := https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-$(LINUX_VERSION).tar.sign
+LINUX_KEYRING_URL := https://www.kernel.org/keys.html
+LINUX_KEYRING_FPRS := ABAF 11C6 5A29 7085 7FD5  5FC0 3B0C 2E48 78E3 12A9, 647F 2865 4894 E3BD 4571  99BE 38DB BDC8 6092 693E
 LINUX_SHA256 := ccf4dfa2af6706f13bdfc18865b2a59cf34669bf3421af365336340d258945a6
 
 GCC_VERSION := 15.2.0

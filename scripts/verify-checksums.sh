@@ -38,6 +38,7 @@ BINUTILS_SHA=$(value_of BINUTILS_SHA256)
 GCC_SHA=$(value_of GCC_SHA256)
 MUSL_SHA=$(value_of MUSL_SHA256)
 LINUX_SHA=$(value_of LINUX_SHA256)
+LINUX_KEYRING_FPRS=$(value_of LINUX_KEYRING_FPRS)
 GNU_KEYRING_FPRS=$(value_of GNU_KEYRING_FPRS)
 MUSL_PUBKEY_FPR=$(value_of MUSL_PUBKEY_FPR)
 
@@ -74,9 +75,14 @@ verify_key_fprs() {
   local key_file="$1"
   local expected_list="$2"
   local label="$3"
-  local found expected normalized_expected
+  local found expected normalized_expected expected_items
 
-  for expected in $expected_list; do
+  expected_items=$(printf '%s' "$expected_list" | tr ',' ' ')
+
+  for expected in $expected_items; do
+    if [[ -z "$expected" ]]; then
+      continue
+    fi
     normalized_expected=$(normalize_fpr "$expected")
     found=0
     while IFS= read -r fpr; do
@@ -99,6 +105,7 @@ SIG_GCC="gcc-${GCC_VERSION}.tar.xz.sig"
 SIG_MUSL="musl-${MUSL_VERSION}.tar.gz.asc"
 
 GNU_KEYRING="$DOWNLOADS_DIR/gnu-keyring.gpg"
+LINUX_KEYRING="$DOWNLOADS_DIR/linux-keyring.gpg"
 MUSL_PUBKEY="$DOWNLOADS_DIR/musl.pub"
 
 ensure_file_present() {
@@ -126,6 +133,13 @@ import_gnu_keyring() {
   ensure_fpr_set "GNU_KEYRING_FPRS" "$GNU_KEYRING_FPRS"
   verify_key_fprs "$GNU_KEYRING" "$GNU_KEYRING_FPRS" "GNU keyring"
   gpg "${gpg_common_args[@]}" --import "$GNU_KEYRING" >/dev/null
+}
+
+import_linux_keyring() {
+  ensure_file_present "$LINUX_KEYRING" "Linux kernel signing keyring"
+  ensure_fpr_set "LINUX_KEYRING_FPRS" "$LINUX_KEYRING_FPRS"
+  verify_key_fprs "$LINUX_KEYRING" "$LINUX_KEYRING_FPRS" "Linux kernel signing keyring"
+  gpg "${gpg_common_args[@]}" --import "$LINUX_KEYRING" >/dev/null
 }
 
 import_musl_pubkey() {
@@ -160,7 +174,7 @@ verify_linux() {
   ensure_checksum_set "linux" "$LINUX_SHA"
   ensure_file_present "$DOWNLOADS_DIR/$SIG_LINUX" "Linux headers signature file"
   ensure_file_present "$DOWNLOADS_DIR/linux-${LINUX_VERSION}.tar.gz" "linux source archive"
-  import_gnu_keyring
+  import_linux_keyring
   echo "Verifying Linux headers signature..."
   verify_signature "$SIG_LINUX" "linux-${LINUX_VERSION}.tar.gz"
   echo "Verifying Linux headers checksum..."
