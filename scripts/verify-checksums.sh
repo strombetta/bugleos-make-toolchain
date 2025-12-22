@@ -132,11 +132,7 @@ SIG_BINUTILS="binutils-${BINUTILS_VERSION}.tar.xz.sig"
 SIG_LINUX="linux-${LINUX_VERSION}.tar.sign"
 SIG_GCC="gcc-${GCC_VERSION}.tar.xz.sig"
 SIG_MUSL="musl-${MUSL_VERSION}.tar.gz.asc"
-
 GNU_KEYRING="$DOWNLOADS_DIR/gnu-keyring.gpg"
-# Nota: linux-keyring.gpg non è più scaricato da kernel.org; se presente lo usiamo,
-# altrimenti importiamo via WKD (gpg --locate-keys), funzionale anche in CI GitHub.
-LINUX_KEYRING="$DOWNLOADS_DIR/linux-keyring.gpg"
 MUSL_PUBKEY="$DOWNLOADS_DIR/musl.pub"
 
 ensure_file_present() {
@@ -181,17 +177,6 @@ import_gnu_keyring() {
 
 import_linux_keys() {
   ensure_fpr_set "LINUX_KEYRING_FPRS" "$LINUX_KEYRING_FPRS"
-
-  # 1) Se esiste un keyring locale, usalo (utile per ambienti offline / deterministici)
-  if [[ -f "$LINUX_KEYRING" ]]; then
-    verify_key_fprs "$LINUX_KEYRING" "$LINUX_KEYRING_FPRS" "Linux kernel signing keyring"
-    gpg "${gpg_common_args[@]}" --import "$LINUX_KEYRING" >/dev/null
-    return 0
-  fi
-
-  # 2) Fallback: import via WKD (ideale per CI GitHub)
-  # Importiamo i releaser principali; la sicurezza è nel controllo fingerprint.
-  # Nota: l'elenco può essere esteso senza impatto sul flusso.
   gpg "${gpg_common_args[@]}" --locate-keys \
     torvalds@kernel.org \
     gregkh@kernel.org \
@@ -199,11 +184,8 @@ import_linux_keys() {
     benh@kernel.org \
     >/dev/null 2>&1 || {
       echo "Failed to import Linux kernel signing keys via WKD. Network/TLS issue?" >&2
-      echo "Tip: pre-generate $LINUX_KEYRING into downloads/ and retry (offline mode)." >&2
       exit 1
     }
-
-  # Verifica che almeno le fingerprint attese siano presenti nel keyring temporaneo
   GNUPGHOME="$GNUPGHOME_TMP" verify_gpg_fprs_in_homedir "$LINUX_KEYRING_FPRS" "Linux kernel signing keys (WKD)"
 }
 
