@@ -82,16 +82,16 @@ PKGDIR ?= $(ROOT_DIR)/patches
 
 BINUTILS_ARCHIVE := $(DOWNLOADS_DIR)/binutils-$(BINUTILS_VERSION).tar.xz
 BINUTILS_SRC_DIR := $(SOURCES_DIR)/binutils-$(BINUTILS_VERSION)
-GCC_ARCHIVE := $(DOWNLOADS_DIR)/gcc-$(GCC_VERSION).tar.xz
-GCC_SRC_DIR := $(SOURCES_DIR)/gcc-$(GCC_VERSION)
-MUSL_ARCHIVE := $(DOWNLOADS_DIR)/musl-$(MUSL_VERSION).tar.gz
-MUSL_SRC_DIR := $(SOURCES_DIR)/musl-$(MUSL_VERSION)
 BINUTILS_STAMP := $(DOWNLOADS_DIR)/.binutils-$(BINUTILS_VERSION)-verified
-GCC_STAMP := $(DOWNLOADS_DIR)/.gcc-$(GCC_VERSION)-verified
-MUSL_STAMP := $(DOWNLOADS_DIR)/.musl-$(MUSL_VERSION)-verified
-LINUX_ARCHIVE := $(DOWNLOADS_DIR)/linux-$(LINUX_VERSION).tar.xz
+LINUX_ARCHIVE := $(DOWNLOADS_DIR)/linux-$(LINUX_VERSION).tar.gz
 LINUX_SRC_DIR := $(SOURCES_DIR)/linux-$(LINUX_VERSION)
 LINUX_STAMP := $(DOWNLOADS_DIR)/.linux-$(LINUX_VERSION)-verified
+GCC_ARCHIVE := $(DOWNLOADS_DIR)/gcc-$(GCC_VERSION).tar.xz
+GCC_SRC_DIR := $(SOURCES_DIR)/gcc-$(GCC_VERSION)
+GCC_STAMP := $(DOWNLOADS_DIR)/.gcc-$(GCC_VERSION)-verified
+MUSL_ARCHIVE := $(DOWNLOADS_DIR)/musl-$(MUSL_VERSION).tar.gz
+MUSL_SRC_DIR := $(SOURCES_DIR)/musl-$(MUSL_VERSION)
+MUSL_STAMP := $(DOWNLOADS_DIR)/.musl-$(MUSL_VERSION)-verified
 
 # Directory helpers
 BINUTILS1_BUILD_DIR := $(BUILDS_DIR)/binutils-stage1
@@ -104,15 +104,20 @@ LINUX_HEADERS_BUILD_DIR := $(BUILDS_DIR)/linux-headers
 ensure-dirs:
 	@mkdir -p $(DOWNLOADS_DIR) $(SOURCES_DIR) $(BUILDS_DIR) $(OUT_DIR) $(TOOLCHAIN_ROOT) $(TOOLCHAIN) $(STAGE1_TOOLCHAIN_ROOT) $(SYSROOT) $(STAGE1_SYSROOT) $(LOGS_DIR)
 
-.PHONY: ensure-binutils ensure-gcc ensure-musl ensure-linux
+.PHONY: ensure-binutils ensure-linux ensure-gcc ensure-musl 
 ensure-binutils: $(BINUTILS_STAMP)
+ensure-linux: $(LINUX_STAMP)
 ensure-gcc: $(GCC_STAMP)
 ensure-musl: $(MUSL_STAMP)
-ensure-linux: $(LINUX_STAMP)
 
 $(BINUTILS_STAMP): | ensure-dirs
 	$(call do_download,binutils,$(ROOT_DIR)/scripts/fetch-sources.sh binutils,binutils-download)
 	$(call do_verify,binutils,$(ROOT_DIR)/scripts/verify-checksums.sh binutils,binutils-verify)
+	$(Q)touch $@
+
+$(LINUX_STAMP): | ensure-dirs
+	$(call do_download,linux,$(ROOT_DIR)/scripts/fetch-sources.sh linux,linux-download)
+	$(call do_verify,linux,$(ROOT_DIR)/scripts/verify-checksums.sh linux,linux-verify)
 	$(Q)touch $@
 
 $(GCC_STAMP): | ensure-dirs
@@ -125,14 +130,13 @@ $(MUSL_STAMP): | ensure-dirs
 	$(call do_verify,musl,$(ROOT_DIR)/scripts/verify-checksums.sh musl,musl-verify)
 	$(Q)touch $@
 
-$(LINUX_STAMP): | ensure-dirs
-	$(call do_download,linux,$(ROOT_DIR)/scripts/fetch-sources.sh linux,linux-download)
-	$(call do_verify,linux,$(ROOT_DIR)/scripts/verify-checksums.sh linux,linux-verify)
-	$(Q)touch $@
-
 unpack-binutils: ensure-binutils
 	@rm -rf $(BINUTILS_SRC_DIR)
 	@$(TAR) -xf $(BINUTILS_ARCHIVE) -C $(SOURCES_DIR)
+
+unpack-linux: ensure-linux
+	@rm -rf $(LINUX_SRC_DIR)
+	@$(TAR) -xf $(LINUX_ARCHIVE) -C $(SOURCES_DIR)
 
 unpack-gcc: ensure-gcc
 	@rm -rf $(GCC_SRC_DIR)
@@ -141,7 +145,3 @@ unpack-gcc: ensure-gcc
 unpack-musl: ensure-musl
 	@rm -rf $(MUSL_SRC_DIR)
 	@$(TAR) -xf $(MUSL_ARCHIVE) -C $(SOURCES_DIR)
-
-unpack-linux: ensure-linux
-	@rm -rf $(LINUX_SRC_DIR)
-	@$(TAR) -xf $(LINUX_ARCHIVE) -C $(SOURCES_DIR)
