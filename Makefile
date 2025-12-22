@@ -28,12 +28,6 @@ WITH_LINUX_HEADERS ?= 0
 ARCHES := aarch64 x86_64
 load_target = $(strip $(shell awk -F':=' '/^TARGET/ {gsub(/[ \t]/,"",$$2);print $$2}' config/arch/$(1).mk))
 
-ifeq ($(WITH_LINUX_HEADERS),1)
-TOOLCHAIN_DEPS := binutils-stage1 gcc-stage1 linux-headers musl binutils-stage2 gcc-stage2 metadata
-else
-TOOLCHAIN_DEPS := binutils-stage1 gcc-stage1 musl binutils-stage2 gcc-stage2 metadata
-endif
-
 .PHONY: $(ARCHES) toolchain binutils-stage1 gcc-stage1 musl linux-headers binutils-stage2 gcc-stage2 metadata verify-toolchain clean distclean check help sanity
 
 help:
@@ -66,26 +60,18 @@ musl:
 linux-headers:
 	@$(MAKE) -f make/linux-headers.mk TARGET=$(TARGET) linux-headers
 
-ifeq ($(WITH_LINUX_HEADERS),1)
-musl: linux-headers
-endif
-
 binutils-stage2:
 	@$(MAKE) -f make/binutils-stage2.mk TARGET=$(TARGET) binutils-stage2
 
 gcc-stage2:
 	@$(MAKE) -f make/gcc-stage2.mk TARGET=$(TARGET) gcc-stage2
 
-metadata: guard-TARGET
-	@ROOT_DIR=$(ROOT_DIR) TARGET=$(TARGET) TOOLCHAIN_ROOT=$(TOOLCHAIN_ROOT) TOOLCHAIN=$(TOOLCHAIN_TARGET_DIR) SYSROOT=$(SYSROOT) \
-		$(ROOT_DIR)/scripts/gen-metadata.sh
-
 verify-toolchain: guard-TARGET
 	@ROOT_DIR=$(ROOT_DIR) TARGET=$(TARGET) TOOLCHAIN_ROOT=$(TOOLCHAIN_ROOT) TOOLCHAIN=$(TOOLCHAIN_TARGET_DIR) SYSROOT=$(SYSROOT) \
 		PATH="$(TOOLCHAIN_ROOT)/bin:$(TOOLCHAIN_TARGET_DIR)/bin:$$PATH" \
 		$(ROOT_DIR)/scripts/verify-toolchain.sh
 
-toolchain: $(TOOLCHAIN_DEPS)
+toolchain: binutils-stage1 linux-headers gcc-stage1 musl binutils-stage2 gcc-stage2
 
 clean:
 	@rm -rf $(BUILDS_DIR) $(LOGS_DIR)

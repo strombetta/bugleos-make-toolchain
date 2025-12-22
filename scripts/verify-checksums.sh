@@ -38,6 +38,8 @@ BINUTILS_SHA=$(value_of BINUTILS_SHA256)
 GCC_SHA=$(value_of GCC_SHA256)
 MUSL_SHA=$(value_of MUSL_SHA256)
 LINUX_SHA=$(value_of LINUX_SHA256)
+GNU_KEYRING_FPRS=$(value_of GNU_KEYRING_FPRS)
+MUSL_PUBKEY_FPR=$(value_of MUSL_PUBKEY_FPR)
 
 ensure_checksum_set() {
   local name="$1"
@@ -47,6 +49,48 @@ ensure_checksum_set() {
     echo "Checksum for $name is missing. Please update config/versions.mk with the real SHA256 before verifying." >&2
     exit 1
   fi
+}
+
+ensure_fpr_set() {
+  local name="$1"
+  local value="$2"
+
+  if [[ -z "$value" || $value =~ FPR_PLACEHOLDER ]]; then
+    echo "Fingerprint for $name is missing. Please update config/versions.mk before verifying." >&2
+    exit 1
+  fi
+}
+
+normalize_fpr() {
+  printf '%s' "$1" | tr -d '[:space:]' | tr '[:lower:]' '[:upper:]'
+}
+
+extract_fprs() {
+  local key_file="$1"
+  gpg --with-colons --fingerprint --show-keys "$key_file" | awk -F: '$1 == "fpr" {print $10}'
+}
+
+verify_key_fprs() {
+  local key_file="$1"
+  local expected_list="$2"
+  local label="$3"
+  local found expected normalized_expected
+
+  for expected in $expected_list; do
+    normalized_expected=$(normalize_fpr "$expected")
+    found=0
+    while IFS= read -r fpr; do
+      if [ "$(normalize_fpr "$fpr")" = "$normalized_expected" ]; then
+        found=1
+        break
+      fi
+    done < <(extract_fprs "$key_file")
+
+    if [ "$found" -ne 1 ]; then
+      echo "Expected fingerprint not found for $label: $expected" >&2
+      exit 1
+    fi
+  done
 }
 
 SIG_BINUTILS="binutils-${BINUTILS_VERSION}.tar.xz.sig"
@@ -78,11 +122,15 @@ gpg_common_args=(--homedir "$GNUPGHOME_TMP" --batch --no-tty)
 
 import_gnu_keyring() {
   ensure_file_present "$GNU_KEYRING" "GNU project keyring"
+  ensure_fpr_set "GNU_KEYRING_FPRS" "$GNU_KEYRING_FPRS"
+  verify_key_fprs "$GNU_KEYRING" "$GNU_KEYRING_FPRS" "GNU keyring"
   gpg "${gpg_common_args[@]}" --import "$GNU_KEYRING" >/dev/null
 }
 
 import_musl_pubkey() {
   ensure_file_present "$MUSL_PUBKEY" "musl public key"
+  ensure_fpr_set "MUSL_PUBKEY_FPR" "$MUSL_PUBKEY_FPR"
+  verify_key_fprs "$MUSL_PUBKEY" "$MUSL_PUBKEY_FPR" "musl public key"
   gpg "${gpg_common_args[@]}" --import "$MUSL_PUBKEY" >/dev/null
 }
 
