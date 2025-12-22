@@ -39,5 +39,5 @@ MUSL_PUBKEY_URL := https://musl.libc.org/musl.pub
 MUSL_PUBKEY_FPR := 8364 8929 0BB6 B70F 99FF  DA05 56BC DB59 3020 450F
 
 LINUX_VERSION := 6.18.0
-LINUX_URL := https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-$(LINUX_VERSION).tar.xz
+LINUX_URL := https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-$(LINUX_VERSION).tar.gz
 LINUX_SHA256 := SHA256_PLACEHOLDER
