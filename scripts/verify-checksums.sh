@@ -94,7 +94,7 @@ verify_key_fprs() {
 }
 
 SIG_BINUTILS="binutils-${BINUTILS_VERSION}.tar.xz.sig"
-SIG_LINUX="linux-${LINUX_VERSION}.tar.gz.sign"
+SIG_LINUX="linux-${LINUX_VERSION}.tar.sign"
 SIG_GCC="gcc-${GCC_VERSION}.tar.xz.sig"
 SIG_MUSL="musl-${MUSL_VERSION}.tar.gz.asc"
 
