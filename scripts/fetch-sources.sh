@@ -89,7 +89,7 @@ fetch_binutils() {
 }
 
 fetch_linux() {
-  fetch "linux-${LINUX_VERSION}.tar.gz" "$(expand_url "$LINUX_URL")"
+  fetch "linux-${LINUX_VERSION}.tar.xz" "$(expand_url "$LINUX_URL")"
   fetch "linux-${LINUX_VERSION}.tar.sign" "$(expand_url "$LINUX_SIG_URL")"
 }
 
