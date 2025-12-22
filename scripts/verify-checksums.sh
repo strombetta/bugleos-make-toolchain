@@ -187,7 +187,7 @@ import_linux_keys() {
   local gpg_err addr
   gpg_err="$(mktemp)"
 
-  for addr in torvalds@kernel.org gregkh@kernel.org sasha@kernel.org benh@kernel.org; do
+  for addr in torvalds@kernel.org gregkh@kernel.org; do
     if ! gpg "${gpg_common_args[@]}" --locate-keys "$addr" >/dev/null 2>>"$gpg_err"; then
       echo "Failed to import Linux kernel signing key via WKD: $addr" >&2
       echo "gpg stderr follows:" >&2
