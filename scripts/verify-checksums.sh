@@ -156,6 +156,17 @@ verify_binutils() {
   verify_checksum "$BINUTILS_SHA" "binutils-${BINUTILS_VERSION}.tar.xz"
 }
 
+verify_linux() {
+  ensure_checksum_set "linux" "$LINUX_SHA"
+  ensure_file_present "$DOWNLOADS_DIR/$SIG_LINUX" "Linux headers signature file"
+  ensure_file_present "$DOWNLOADS_DIR/linux-${LINUX_VERSION}.tar.gz" "linux source archive"
+  import_gnu_keyring
+  echo "Verifying Linux headers signature..."
+  verify_signature "$SIG_LINUX" "linux-${LINUX_VERSION}.tar.gz"
+  echo "Verifying Linux headers checksum..."
+  verify_checksum "$LINUX_SHA" "linux-${LINUX_VERSION}.tar.gz"
+}
+
 verify_gcc() {
   ensure_checksum_set "GCC" "$GCC_SHA"
   ensure_file_present "$DOWNLOADS_DIR/$SIG_GCC" "GCC signature file"
@@ -178,20 +189,11 @@ verify_musl() {
   verify_checksum "$MUSL_SHA" "musl-${MUSL_VERSION}.tar.gz"
 }
 
-verify_linux() {
-  ensure_checksum_set "linux" "$LINUX_SHA"
-  ensure_file_present "$DOWNLOADS_DIR/linux-${LINUX_VERSION}.tar.gz" "linux source archive"
-  echo "Verifying GCC signature..."
-  verify_signature "$SIG_LINUX" "linux-${LINUX_VERSION}.tar.gz"
-  echo "Verifying Linux headers checksum..."
-  verify_checksum "$LINUX_SHA" "linux-${LINUX_VERSION}.tar.gz"
-}
-
 verify_all() {
   verify_binutils
+  verify_linux
   verify_gcc
   verify_musl
-  verify_linux
 }
 
 if [[ $# -eq 0 ]]; then
