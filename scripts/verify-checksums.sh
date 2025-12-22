@@ -7,10 +7,10 @@
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -38,6 +38,7 @@ BINUTILS_SHA=$(value_of BINUTILS_SHA256)
 GCC_SHA=$(value_of GCC_SHA256)
 MUSL_SHA=$(value_of MUSL_SHA256)
 LINUX_SHA=$(value_of LINUX_SHA256)
+
 LINUX_KEYRING_FPRS=$(value_of LINUX_KEYRING_FPRS)
 GNU_KEYRING_FPRS=$(value_of GNU_KEYRING_FPRS)
 MUSL_PUBKEY_FPR=$(value_of MUSL_PUBKEY_FPR)
@@ -99,12 +100,42 @@ verify_key_fprs() {
   done
 }
 
+# Verifica fingerprint direttamente dal keyring GNUPG temporaneo (utile per WKD in CI)
+verify_gpg_fprs_in_homedir() {
+  local expected_list="$1"
+  local label="$2"
+  local expected_items expected normalized_expected found
+
+  expected_items=$(printf '%s' "$expected_list" | tr ',' ' ')
+  for expected in $expected_items; do
+    if [[ -z "$expected" ]]; then
+      continue
+    fi
+    normalized_expected=$(normalize_fpr "$expected")
+    found=0
+
+    while IFS= read -r fpr; do
+      if [ "$(normalize_fpr "$fpr")" = "$normalized_expected" ]; then
+        found=1
+        break
+      fi
+    done < <(gpg --with-colons --fingerprint 2>/dev/null | awk -F: '$1 == "fpr" {print $10}')
+
+    if [ "$found" -ne 1 ]; then
+      echo "Expected fingerprint not found for $label: $expected" >&2
+      exit 1
+    fi
+  done
+}
+
 SIG_BINUTILS="binutils-${BINUTILS_VERSION}.tar.xz.sig"
 SIG_LINUX="linux-${LINUX_VERSION}.tar.sign"
 SIG_GCC="gcc-${GCC_VERSION}.tar.xz.sig"
 SIG_MUSL="musl-${MUSL_VERSION}.tar.gz.asc"
 
 GNU_KEYRING="$DOWNLOADS_DIR/gnu-keyring.gpg"
+# Nota: linux-keyring.gpg non è più scaricato da kernel.org; se presente lo usiamo,
+# altrimenti importiamo via WKD (gpg --locate-keys), funzionale anche in CI GitHub.
 LINUX_KEYRING="$DOWNLOADS_DIR/linux-keyring.gpg"
 MUSL_PUBKEY="$DOWNLOADS_DIR/musl.pub"
 
@@ -119,6 +150,19 @@ EOF
     exit 1
   fi
 }
+
+require_cmd() {
+  local cmd="$1"
+  if ! command -v "$cmd" >/dev/null 2>&1; then
+    echo "Missing required command: $cmd" >&2
+    exit 1
+  fi
+}
+
+require_cmd awk
+require_cmd gpg
+require_cmd sha256sum
+require_cmd xz
 
 GNUPGHOME_TMP=$(mktemp -d)
 cleanup() {
@@ -135,11 +179,32 @@ import_gnu_keyring() {
   gpg "${gpg_common_args[@]}" --import "$GNU_KEYRING" >/dev/null
 }
 
-import_linux_keyring() {
-  ensure_file_present "$LINUX_KEYRING" "Linux kernel signing keyring"
+import_linux_keys() {
   ensure_fpr_set "LINUX_KEYRING_FPRS" "$LINUX_KEYRING_FPRS"
-  verify_key_fprs "$LINUX_KEYRING" "$LINUX_KEYRING_FPRS" "Linux kernel signing keyring"
-  gpg "${gpg_common_args[@]}" --import "$LINUX_KEYRING" >/dev/null
+
+  # 1) Se esiste un keyring locale, usalo (utile per ambienti offline / deterministici)
+  if [[ -f "$LINUX_KEYRING" ]]; then
+    verify_key_fprs "$LINUX_KEYRING" "$LINUX_KEYRING_FPRS" "Linux kernel signing keyring"
+    gpg "${gpg_common_args[@]}" --import "$LINUX_KEYRING" >/dev/null
+    return 0
+  fi
+
+  # 2) Fallback: import via WKD (ideale per CI GitHub)
+  # Importiamo i releaser principali; la sicurezza è nel controllo fingerprint.
+  # Nota: l'elenco può essere esteso senza impatto sul flusso.
+  gpg "${gpg_common_args[@]}" --locate-keys \
+    torvalds@kernel.org \
+    gregkh@kernel.org \
+    sasha@kernel.org \
+    benh@kernel.org \
+    >/dev/null 2>&1 || {
+      echo "Failed to import Linux kernel signing keys via WKD. Network/TLS issue?" >&2
+      echo "Tip: pre-generate $LINUX_KEYRING into downloads/ and retry (offline mode)." >&2
+      exit 1
+    }
+
+  # Verifica che almeno le fingerprint attese siano presenti nel keyring temporaneo
+  GNUPGHOME="$GNUPGHOME_TMP" verify_gpg_fprs_in_homedir "$LINUX_KEYRING_FPRS" "Linux kernel signing keys (WKD)"
 }
 
 import_musl_pubkey() {
@@ -152,6 +217,12 @@ import_musl_pubkey() {
 verify_signature() {
   local sig_file="$1" target_file="$2"
   gpg "${gpg_common_args[@]}" --verify "$DOWNLOADS_DIR/$sig_file" "$DOWNLOADS_DIR/$target_file"
+}
+
+# Verifica firma "detached" su STDIN (necessario per linux-*.tar.sign)
+verify_signature_stdin() {
+  local sig_path="$1"
+  gpg "${gpg_common_args[@]}" --verify "$sig_path" -
 }
 
 verify_checksum() {
@@ -172,12 +243,18 @@ verify_binutils() {
 
 verify_linux() {
   ensure_checksum_set "linux" "$LINUX_SHA"
-  ensure_file_present "$DOWNLOADS_DIR/$SIG_LINUX" "Linux headers signature file"
-  ensure_file_present "$DOWNLOADS_DIR/linux-${LINUX_VERSION}.tar.xz" "linux source archive"
-  import_linux_keyring
-  echo "Verifying Linux headers signature..."
-  verify_signature "$SIG_LINUX" "linux-${LINUX_VERSION}.tar.xz"
-  echo "Verifying Linux headers checksum..."
+  ensure_file_present "$DOWNLOADS_DIR/$SIG_LINUX" "Linux source signature file"
+  ensure_file_present "$DOWNLOADS_DIR/linux-${LINUX_VERSION}.tar.xz" "Linux source archive"
+
+  import_linux_keys
+
+  # CORRETTO: linux-*.tar.sign firma il TAR NON compresso.
+  # Quindi verifichiamo la firma sullo stream decompresso.
+  echo "Verifying Linux source signature (xz -cd | gpg --verify ... -)..."
+  xz -cd "$DOWNLOADS_DIR/linux-${LINUX_VERSION}.tar.xz" | \
+    verify_signature_stdin "$DOWNLOADS_DIR/$SIG_LINUX"
+
+  echo "Verifying Linux source checksum..."
   verify_checksum "$LINUX_SHA" "linux-${LINUX_VERSION}.tar.xz"
 }
 
@@ -210,8 +287,9 @@ verify_all() {
   verify_musl
 }
 
+# Default: includi anche linux, così in CI verifichi tutto ciò che fetchi.
 if [[ $# -eq 0 ]]; then
-  set -- binutils gcc musl
+  set -- binutils linux gcc musl
 fi
 
 for component in "$@"; do
