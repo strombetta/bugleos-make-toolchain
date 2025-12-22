@@ -132,6 +132,7 @@ SIG_BINUTILS="binutils-${BINUTILS_VERSION}.tar.xz.sig"
 SIG_LINUX="linux-${LINUX_VERSION}.tar.sign"
 SIG_GCC="gcc-${GCC_VERSION}.tar.xz.sig"
 SIG_MUSL="musl-${MUSL_VERSION}.tar.gz.asc"
+LINUX_KEYRING="$DOWNLOADS_DIR/linux-keyring.gpg"
 GNU_KEYRING="$DOWNLOADS_DIR/gnu-keyring.gpg"
 MUSL_PUBKEY="$DOWNLOADS_DIR/musl.pub"
 
@@ -177,17 +178,33 @@ import_gnu_keyring() {
 
 import_linux_keys() {
   ensure_fpr_set "LINUX_KEYRING_FPRS" "$LINUX_KEYRING_FPRS"
-  gpg "${gpg_common_args[@]}" --locate-keys \
-    torvalds@kernel.org \
-    gregkh@kernel.org \
-    sasha@kernel.org \
-    benh@kernel.org \
-    >/dev/null 2>&1 || {
-      echo "Failed to import Linux kernel signing keys via WKD. Network/TLS issue?" >&2
+  if [[ -f "$LINUX_KEYRING" ]]; then
+    verify_key_fprs "$LINUX_KEYRING" "$LINUX_KEYRING_FPRS" "Linux kernel signing keyring"
+    gpg "${gpg_common_args[@]}" --import "$LINUX_KEYRING" >/dev/null
+    return 0
+  fi
+
+  local gpg_err addr
+  gpg_err="$(mktemp)"
+
+  for addr in torvalds@kernel.org gregkh@kernel.org sasha@kernel.org benh@kernel.org; do
+    if ! gpg "${gpg_common_args[@]}" --locate-keys "$addr" >/dev/null 2>>"$gpg_err"; then
+      echo "Failed to import Linux kernel signing key via WKD: $addr" >&2
+      echo "gpg stderr follows:" >&2
+      sed 's/^/  /' "$gpg_err" >&2
+      rm -f "$gpg_err"
+      echo "Tip: generate $LINUX_KEYRING (offline CI-friendly) and rerun." >&2
       exit 1
-    }
-  GNUPGHOME="$GNUPGHOME_TMP" verify_gpg_fprs_in_homedir "$LINUX_KEYRING_FPRS" "Linux kernel signing keys (WKD)"
+    fi
+  done
+
+  rm -f "$gpg_err"
+
+  GNUPGHOME="$GNUPGHOME_TMP" verify_gpg_fprs_in_homedir \
+    "$LINUX_KEYRING_FPRS" \
+    "Linux kernel signing keys (WKD)"
 }
+
 
 import_musl_pubkey() {
   ensure_file_present "$MUSL_PUBKEY" "musl public key"
