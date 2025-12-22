@@ -94,6 +94,7 @@ verify_key_fprs() {
 }
 
 SIG_BINUTILS="binutils-${BINUTILS_VERSION}.tar.xz.sig"
+SIG_LINUX="linux-${LINUX_VERSION}.tar.gz.sign"
 SIG_GCC="gcc-${GCC_VERSION}.tar.xz.sig"
 SIG_MUSL="musl-${MUSL_VERSION}.tar.gz.asc"
 
@@ -179,9 +180,11 @@ verify_musl() {
 
 verify_linux() {
   ensure_checksum_set "linux" "$LINUX_SHA"
-  ensure_file_present "$DOWNLOADS_DIR/linux-${LINUX_VERSION}.tar.xz" "linux source archive"
+  ensure_file_present "$DOWNLOADS_DIR/linux-${LINUX_VERSION}.tar.gz" "linux source archive"
+  echo "Verifying GCC signature..."
+  verify_signature "$SIG_LINUX" "linux-${LINUX_VERSION}.tar.gz"
   echo "Verifying Linux headers checksum..."
-  verify_checksum "$LINUX_SHA" "linux-${LINUX_VERSION}.tar.xz"
+  verify_checksum "$LINUX_SHA" "linux-${LINUX_VERSION}.tar.gz"
 }
 
 verify_all() {
