@@ -112,7 +112,7 @@ fetch_all() {
 }
 
 if [[ $# -eq 0 ]]; then
-  set -- binutils gcc musl
+  set -- binutils linux gcc musl
 fi
 
 for component in "$@"; do

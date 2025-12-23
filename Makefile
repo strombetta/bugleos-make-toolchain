@@ -23,7 +23,6 @@ include config/paths.mk
 include config/versions.mk
 
 MAKEFLAGS += --no-print-directory
-WITH_LINUX_HEADERS ?= 0
 
 ARCHES := aarch64 x86_64
 load_target = $(strip $(shell awk -F':=' '/^TARGET/ {gsub(/[ \t]/,"",$$2);print $$2}' config/arch/$(1).mk))
