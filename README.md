@@ -33,7 +33,6 @@ Build a toolchain for a specific architecture:
 
 ```
 make x86_64
-make i686
 make aarch64
 ```
 
@@ -41,6 +40,12 @@ The umbrella target `toolchain` builds the current `TARGET` from `config/paths.m
 
 ```
 make TARGET=aarch64-bugleos-linux-musl toolchain
+```
+
+To install Linux UAPI headers into the sysroot, set `WITH_LINUX_HEADERS=1` and update `LINUX_VERSION`/`LINUX_SHA256` in `config/versions.mk`:
+
+```
+make WITH_LINUX_HEADERS=1 x86_64
 ```
 
 ## Using the toolchain environment
@@ -53,12 +58,12 @@ source out/toolchain/x86_64-bugleos-linux-musl/bugleos-toolchain.env
 
 Bootstrap tools (binutils-stage1 and gcc-stage1) install into `out/toolchain-stage1/<triple>`, keeping temporary artifacts separate from the final cross-toolchain under `out/toolchain/<triple>`. Only the latter is required to build BugleOS userspace or kernels.
 
-Stage1 sysroot contents live under `out/sysroot-stage1/<triple>`, while the final sysroot is colocated with the deliverable toolchain at `out/toolchain/<triple>`. Headers are exposed directly under `out/toolchain/<triple>/include` for predictable `--print-sysroot` checks.
+Stage1 sysroot contents live under `out/toolchain-stage1/sysroot`, while the final sysroot is located at `out/toolchain/<triple>/sysroot`. Headers are exposed under `out/toolchain/<triple>/sysroot/usr/include` for predictable `--print-sysroot` checks.
 
 Alternatively, enter the environment manually:
 
 ```
-TARGET=x86_64-bugleos-linux-musl scripts/enter-env.sh
+TARGET=x86_64-bugleos-linux-musl . scripts/enter-env.sh
 ```
 
 To validate an existing build and ensure the compiler never falls back to host headers, run:
@@ -75,8 +80,8 @@ make TARGET=aarch64-bugleos-linux-musl verify-toolchain
 ## Continuous Integration
 
 ## Feedback
-## Releated Projects
+## Related Projects
 ## Code of Conduct
 ## License
 Copyright (C) Sebastiano Trombetta. All rights reserved.
-This project is licensed under the MIT License. For the full text of the license, see the link:LICENSE[LICENSE] file.
+This project is licensed under the MIT License. For the full text of the license, see the LICENSE file.

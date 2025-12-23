@@ -66,22 +66,30 @@ fetch() {
 }
 
 BINUTILS_VERSION=$(version_of BINUTILS_VERSION)
+LINUX_VERSION=$(version_of LINUX_VERSION)
 GCC_VERSION=$(version_of GCC_VERSION)
 MUSL_VERSION=$(version_of MUSL_VERSION)
 
 BINUTILS_URL=$(url_of BINUTILS_URL)
-GCC_URL=$(url_of GCC_URL)
-MUSL_URL=$(url_of MUSL_URL)
 BINUTILS_SIG_URL=$(url_of BINUTILS_SIG_URL)
+LINUX_URL=$(url_of LINUX_URL)
+LINUX_SIG_URL=$(url_of LINUX_SIG_URL)
+GCC_URL=$(url_of GCC_URL)
 GCC_SIG_URL=$(url_of GCC_SIG_URL)
-MUSL_SIG_URL=$(url_of MUSL_SIG_URL)
 GNU_KEYRING_URL=$(url_of GNU_KEYRING_URL)
+MUSL_URL=$(url_of MUSL_URL)
+MUSL_SIG_URL=$(url_of MUSL_SIG_URL)
 MUSL_PUBKEY_URL=$(url_of MUSL_PUBKEY_URL)
 
 fetch_binutils() {
   fetch "binutils-${BINUTILS_VERSION}.tar.xz" "$(expand_url "$BINUTILS_URL")"
   fetch "binutils-${BINUTILS_VERSION}.tar.xz.sig" "$(expand_url "$BINUTILS_SIG_URL")"
   fetch "gnu-keyring.gpg" "$(expand_url "$GNU_KEYRING_URL")"
+}
+
+fetch_linux() {
+  fetch "linux-${LINUX_VERSION}.tar.xz" "$(expand_url "$LINUX_URL")"
+  fetch "linux-${LINUX_VERSION}.tar.sign" "$(expand_url "$LINUX_SIG_URL")"
 }
 
 fetch_gcc() {
@@ -98,6 +106,7 @@ fetch_musl() {
 
 fetch_all() {
   fetch_binutils
+  fetch_linux
   fetch_gcc
   fetch_musl
 }
@@ -111,6 +120,7 @@ for component in "$@"; do
     binutils) fetch_binutils ;;
     gcc) fetch_gcc ;;
     musl) fetch_musl ;;
+    linux) fetch_linux ;;
     all) fetch_all ;;
     *) echo "Unknown component: $component" >&2; exit 1 ;;
   esac

@@ -5,7 +5,8 @@ ROOT_DIR="${ROOT_DIR:-$(cd "$(dirname "$0")/.." && pwd)}"
 TARGET="${TARGET:-x86_64-bugleos-linux-musl}"
 TOOLCHAIN_ROOT="${TOOLCHAIN_ROOT:-$ROOT_DIR/out/toolchain}"
 TOOLCHAIN="${TOOLCHAIN:-$TOOLCHAIN_ROOT/$TARGET}"
-SYSROOT="${SYSROOT:-$TOOLCHAIN}"
+SYSROOT="${SYSROOT:-$TOOLCHAIN/sysroot}"
+export PATH="$TOOLCHAIN_ROOT/bin:$TOOLCHAIN_ROOT/$TARGET/bin:$PATH"
 
 GCC_BIN="${TARGET}-gcc"
 READELF_BIN="${TARGET}-readelf"
@@ -31,12 +32,19 @@ expected_sysroot="$(normalize "$SYSROOT")"
 printed_sysroot="$(normalize "$($GCC_BIN --print-sysroot)" || true)"
 [ "$printed_sysroot" = "$expected_sysroot" ] || fail "gcc reports sysroot '$printed_sysroot' (expected '$expected_sysroot')"
 
+include_root="$SYSROOT/usr/include"
+if [ ! -d "$include_root" ] && [ -d "$SYSROOT/include" ]; then
+  include_root="$SYSROOT/include"
+fi
+[ -d "$include_root" ] || fail "missing headers directory: $include_root"
 for header in stdio.h stdlib.h unistd.h errno.h; do
-  [ -f "$SYSROOT/include/$header" ] || fail "missing header: $SYSROOT/include/$header"
+  [ -f "$include_root/$header" ] || fail "missing header: $include_root/$header"
 done
 
-[ -f "$SYSROOT/lib/ld-musl-${TARGET%%-*}.so.1" ] || fail "missing dynamic loader: $SYSROOT/lib/ld-musl-${TARGET%%-*}.so.1"
-ls "$SYSROOT/lib"/libc.so* >/dev/null 2>&1 || fail "missing libc runtime under $SYSROOT/lib"
+ldso="$SYSROOT/lib/ld-musl-${TARGET%%-*}.so.1"
+ldso_alt="$SYSROOT/usr/lib/ld-musl-${TARGET%%-*}.so.1"
+[ -e "$ldso" ] || [ -e "$ldso_alt" ] || fail "missing dynamic loader: $ldso (or $ldso_alt)"
+ls "$SYSROOT/lib"/libc.so* >/dev/null 2>&1 || ls "$SYSROOT/usr/lib"/libc.so* >/dev/null 2>&1 || fail "missing libc runtime under $SYSROOT/lib or $SYSROOT/usr/lib"
 
 for crt in crt1.o crti.o crtn.o; do
   if [ -f "$SYSROOT/lib/$crt" ]; then
