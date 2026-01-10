@@ -22,7 +22,7 @@ jobs:
             runs-on: [self-hosted, linux, arm64]
             target: aarch64
             triple: aarch64-bugleos-linux-musl
-            label: arm64
+            label: aarch64
     permissions:
       contents: read
     steps:
@@ -127,7 +127,7 @@ jobs:
             Architecture | Download Link
             ------------ | -------------
             x86_64      | [bugleos-toolchain-${{ env.VERSION }}-x86_64.tar.gz](dist/**/bugleos-toolchain-${{ env.VERSION }}-x86_64.tar.gz)
-            arm64       | [bugleos-toolchain-${{ env.VERSION }}-arm64.tar.gz](dist/**/bugleos-toolchain-${{ env.VERSION }}-arm64.tar.gz)
+            aarch64     | [bugleos-toolchain-${{ env.VERSION }}-aarch64.tar.gz](dist/**/bugleos-toolchain-${{ env.VERSION }}-aarch64.tar.gz)
           files: |
             dist/**/bugleos-toolchain-${{ env.VERSION }}-x86_64.tar.gz
-            dist/**/bugleos-toolchain-${{ env.VERSION }}-arm64.tar.gz
+            dist/**/bugleos-toolchain-${{ env.VERSION }}-aarch64.tar.gz
