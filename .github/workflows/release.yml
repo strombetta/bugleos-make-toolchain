@@ -8,16 +8,18 @@ on:
 jobs:
   build:
     name: Build ${{ matrix.arch }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runs-on }}
     strategy:
       fail-fast: true
       matrix:
         include:
           - arch: x86_64
+            runs-on: ubuntu-latest
             target: x86_64
             triple: x86_64-bugleos-linux-musl
             label: x86_64
           - arch: aarch64
+            runs-on: [self-hosted, linux, arm64]
             target: aarch64
             triple: aarch64-bugleos-linux-musl
             label: arm64
