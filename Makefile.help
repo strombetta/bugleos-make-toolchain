@@ -1,13 +1,14 @@
 # Help target and documentation entries.
 
-## make help          Show this help message
-## make toolchain	 	 Build BugleOS cross-compiling toolchain for host architecture
-## make x86_64        Build BugleOS cross-compiling toolchain for x86_64 architecture
-## make aarch64       Build BugleOS cross-compiling toolchain for aarch64 architecture
-## make clean         Remove builds and logs
-## make distclean     Full cleanup
+## make help  Show this help message
+## make toolchain  Build BugleOS cross-compiling toolchain for host architecture
+## make x86_64  Build BugleOS cross-compiling toolchain for x86_64 architecture
+## make aarch64  Build BugleOS cross-compiling toolchain for aarch64 architecture
+## make clean  Remove builds and logs
+## make distclean  Full cleanup
 ## make check TARGET=<triplet>  Sanity-check an existing toolchain
 
+HELP_COL_WIDTH ?= 24
 HELP_FILES = $(strip $(firstword $(MAKEFILE_LIST)) $(MAKEFILE_LIST) $(MAKEFILES) $(INCLUDES) $(MK_FILES))
 HELP_FILES_EXISTING = $(strip $(foreach f,$(HELP_FILES),$(wildcard $(f))))
 
@@ -16,13 +17,13 @@ help:
 	@echo "BugleOS Cross-compiling Toolchain Builder"
 	@echo
 	@echo "Targets:"
-	@awk 'BEGIN { FS=":.*##"; } \
+	@awk -v width="$(HELP_COL_WIDTH)" 'BEGIN { FS=":.*##"; if (width <= 0) width=24; } \
 		/^[A-Za-z0-9][A-Za-z0-9_%.\/-]*:.*##/ { \
 			target=$$1; \
 			desc=$$2; \
 			sub(/^[ \t]+/, "", desc); \
 			if (!seen[target]++) { \
-				printf "  make %s %s\n", target, desc; \
+				printf "  make %-*s %s\n", width, target, desc; \
 			} \
 			next; \
 		} \
@@ -30,14 +31,27 @@ help:
 			line=$$0; \
 			sub(/^##[[:space:]]+/, "", line); \
 			if (line == "") next; \
-			key=line; \
 			if (line ~ /^make[ \t]+/) { \
-				tmp=line; \
-				sub(/^make[ \t]+/, "", tmp); \
-				split(tmp, parts, /[ \t]+/); \
-				if (parts[1] != "") key=parts[1]; \
-			} \
-			if (!seen[key]++) { \
+				sub(/^make[ \t]+/, "", line); \
+				target_line=line; \
+				desc=""; \
+				if (match(line, /[ \t]{2,}/)) { \
+					target_line=substr(line, 1, RSTART-1); \
+					desc=substr(line, RSTART+RLENGTH); \
+				} \
+				sub(/[ \t]+$$/, "", target_line); \
+				sub(/^[ \t]+/, "", desc); \
+				key=target_line; \
+				split(target_line, keyparts, /[ \t]+/); \
+				if (keyparts[1] != "") key=keyparts[1]; \
+				if (!seen[key]++) { \
+					if (desc != "") { \
+						printf "  make %-*s %s\n", width, target_line, desc; \
+					} else { \
+						printf "  make %s\n", target_line; \
+					} \
+				} \
+			} else if (!seen[line]++) { \
 				printf "  %s\n", line; \
 			} \
 		}' $(HELP_FILES_EXISTING)
