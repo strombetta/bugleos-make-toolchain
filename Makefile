@@ -21,25 +21,14 @@
 
 include config/paths.mk
 include config/versions.mk
+include Makefile.help
 
 MAKEFLAGS += --no-print-directory
 
 ARCHES := aarch64 x86_64
 load_target = $(strip $(shell awk -F':=' '/^TARGET/ {gsub(/[ \t]/,"",$$2);print $$2}' config/arch/$(1).mk))
 
-.PHONY: $(ARCHES) toolchain binutils-stage1 linux-headers gcc-stage1 musl binutils-stage2 gcc-stage2 verify-toolchain clean distclean check help sanity
-
-help:
-	@echo "BugleOS Cross-compiling Toolchain Builder"
-	@echo
-	@echo "Targets:"
-	@echo "  make help          Show this help message"
-	@echo "  make toolchain	 	 Build BugleOS cross-compiling toolchain for host architecture"
-	@echo "  make x86_64        Build BugleOS cross-compiling toolchain for x86_64 architecture"
-	@echo "  make aarch64       Build BugleOS cross-compiling toolchain for aarch64 architecture"
-	@echo "  make clean         Remove builds and logs"
-	@echo "  make distclean     Full cleanup"
-	@echo "  make check TARGET=<triplet>  Sanity-check an existing toolchain"
+.PHONY: $(ARCHES) toolchain binutils-stage1 linux-headers gcc-stage1 musl binutils-stage2 gcc-stage2 verify-toolchain clean distclean check sanity
 
 $(ARCHES):
 	@$(MAKE) TARGET=$(call load_target,$@) toolchain
