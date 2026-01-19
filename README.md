@@ -72,10 +72,19 @@ To validate an existing build and ensure the compiler never falls back to host h
 make TARGET=aarch64-bugleos-linux-musl verify-toolchain
 ```
 
-## Cleaning
+## Cleaning / Resetting
 
-- `make clean` removes `builds/` and `logs/` only.
-- `make distclean` additionally removes `out/` while preserving downloads.
+The Makefile provides a safe, explicit cleaning interface focused on per-package build artifacts and toolchain outputs. Use `TRIPLET=<triple>` (or `TARGET=<triple>`) to scope to a specific architecture. Destructive targets require `FORCE=1`.
+
+Per-package build cleans (they also remove downstream toolchain stages that depend on the selected package, following the `toolchain` build order):
+  - `make clean-binutils` removes binutils build trees, logs, sources, archives/stamps, and installed toolchain outputs.
+  - `make clean-gcc` removes GCC build trees, logs, sources, archives/stamps, and installed toolchain outputs.
+  - `make clean-musl` removes musl build trees, logs, sources, archives/stamps, and musl-installed sysroot headers/libs (preserving Linux UAPI headers).
+  - `make clean-kheaders` removes Linux UAPI header builds, logs, sources, archives/stamps, and the installed Linux headers under the sysroot.
+
+Destructive targets (require `FORCE=1`):
+
+- `make clean-toolchain FORCE=1` removes toolchain outputs (`out/toolchain/<triple>` and `out/toolchain-stage1`).
 
 ## Continuous Integration
 
