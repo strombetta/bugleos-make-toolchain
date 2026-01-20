@@ -36,15 +36,7 @@ TRIPLET ?= $(TARGET)
 
 REPO_ROOT := $(abspath $(CURDIR))
 
-define require_force
-	@if [ "$(FORCE)" != "1" ]; then \
-		echo "ERROR: destructive target requires FORCE=1 to proceed."; \
-		echo "       Re-run with FORCE=1 if you understand the consequences."; \
-		exit 1; \
-	fi
-endef
-
-define safe_rm
+define safe_remove
 	@target="$(1)"; \
 	abs="$(abspath $(1))"; \
 	repo="$(REPO_ROOT)"; \
@@ -63,7 +55,7 @@ define safe_rm
 	rm -rf -- "$$abs"
 endef
 
-define safe_rm_glob
+define safe_remove_glob
 	@dir="$(1)"; \
 	pattern="$(2)"; \
 	abs="$(abspath $(1))"; \
@@ -123,96 +115,95 @@ verify-toolchain: guard-TARGET
 
 toolchain: binutils-stage1 linux-headers gcc-stage1 musl binutils-stage2 gcc-stage2
 
-clean-toolchain: clean-binutils clean-gcc clean-musl clean-kheaders clean-binutils-stage2 clean-gcc-stage2 ## Remove toolchain output for the current triplet (FORCE=1 required)
+clean-toolchain: clean-binutils clean-gcc clean-musl clean-kheaders clean-binutils-stage2 clean-gcc-stage2 ## Remove toolchain output for the current triplet
 	@echo "==> Removing toolchain outputs for $(TRIPLET)"
-	$(call require_force)
-	$(call safe_rm,$(TOOLCHAIN_DIR))
-	$(call safe_rm,$(STAGE1_TOOLCHAIN_ROOT))
+	$(call safe_remove,$(TOOLCHAIN_DIR))
+	$(call safe_remove,$(STAGE1_TOOLCHAIN_ROOT))
 
 clean-binutils: clean-gcc ## Remove binutils build directories
 	@echo "==> Cleaning binutils build outputs"
-	$(call safe_rm,$(BINUTILS1_BUILD_DIR))
-	$(call safe_rm,$(BINUTILS2_BUILD_DIR))
-	$(call safe_rm,$(BINUTILS_SRC_DIR))
-	$(call safe_rm,$(BINUTILS_STAMP))
-	$(call safe_rm,$(BINUTILS_ARCHIVE))
-	$(call safe_rm_glob,$(LOGS_DIR),binutils-stage1-*.log)
-	$(call safe_rm_glob,$(LOGS_DIR),binutils-stage2-*.log)
-	$(foreach tool,$(BINUTILS_TOOLS),$(call safe_rm,$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-$(tool)))
-	$(foreach tool,$(BINUTILS_TOOLS),$(call safe_rm,$(TOOLCHAIN_ROOT)/bin/$(TARGET)-$(tool)))
-	$(call safe_rm_glob,$(STAGE1_TOOLCHAIN_ROOT)/lib,libbfd.*)
-	$(call safe_rm_glob,$(STAGE1_TOOLCHAIN_ROOT)/lib,libopcodes.*)
-	$(call safe_rm_glob,$(STAGE1_TOOLCHAIN_ROOT)/lib,libiberty.*)
-	$(call safe_rm_glob,$(STAGE1_TOOLCHAIN_ROOT)/lib,libctf.*)
-	$(call safe_rm_glob,$(STAGE1_TOOLCHAIN_ROOT)/lib,libctf-nobfd.*)
-	$(call safe_rm_glob,$(STAGE1_TOOLCHAIN_ROOT)/lib,libgprofng.*)
-	$(call safe_rm_glob,$(TOOLCHAIN_ROOT)/lib,libbfd.*)
-	$(call safe_rm_glob,$(TOOLCHAIN_ROOT)/lib,libopcodes.*)
-	$(call safe_rm_glob,$(TOOLCHAIN_ROOT)/lib,libiberty.*)
-	$(call safe_rm_glob,$(TOOLCHAIN_ROOT)/lib,libctf.*)
-	$(call safe_rm_glob,$(TOOLCHAIN_ROOT)/lib,libctf-nobfd.*)
-	$(call safe_rm_glob,$(TOOLCHAIN_ROOT)/lib,libgprofng.*)
+	$(call safe_remove,$(BINUTILS1_BUILD_DIR))
+	$(call safe_remove,$(BINUTILS2_BUILD_DIR))
+	$(call safe_remove,$(BINUTILS_SRC_DIR))
+	$(call safe_remove,$(BINUTILS_STAMP))
+	$(call safe_remove,$(BINUTILS_ARCHIVE))
+	$(call safe_remove_glob,$(LOGS_DIR),binutils-stage1-*.log)
+	$(call safe_remove_glob,$(LOGS_DIR),binutils-stage2-*.log)
+	$(foreach tool,$(BINUTILS_TOOLS),$(call safe_remove,$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-$(tool)))
+	$(foreach tool,$(BINUTILS_TOOLS),$(call safe_remove,$(TOOLCHAIN_ROOT)/bin/$(TARGET)-$(tool)))
+	$(call safe_remove_glob,$(STAGE1_TOOLCHAIN_ROOT)/lib,libbfd.*)
+	$(call safe_remove_glob,$(STAGE1_TOOLCHAIN_ROOT)/lib,libopcodes.*)
+	$(call safe_remove_glob,$(STAGE1_TOOLCHAIN_ROOT)/lib,libiberty.*)
+	$(call safe_remove_glob,$(STAGE1_TOOLCHAIN_ROOT)/lib,libctf.*)
+	$(call safe_remove_glob,$(STAGE1_TOOLCHAIN_ROOT)/lib,libctf-nobfd.*)
+	$(call safe_remove_glob,$(STAGE1_TOOLCHAIN_ROOT)/lib,libgprofng.*)
+	$(call safe_remove_glob,$(TOOLCHAIN_ROOT)/lib,libbfd.*)
+	$(call safe_remove_glob,$(TOOLCHAIN_ROOT)/lib,libopcodes.*)
+	$(call safe_remove_glob,$(TOOLCHAIN_ROOT)/lib,libiberty.*)
+	$(call safe_remove_glob,$(TOOLCHAIN_ROOT)/lib,libctf.*)
+	$(call safe_remove_glob,$(TOOLCHAIN_ROOT)/lib,libctf-nobfd.*)
+	$(call safe_remove_glob,$(TOOLCHAIN_ROOT)/lib,libgprofng.*)
 
 clean-binutils-stage2:
 	@echo "==> Cleaning binutils stage2 outputs"
-	$(call safe_rm,$(BINUTILS2_BUILD_DIR))
-	$(call safe_rm_glob,$(LOGS_DIR),binutils-stage2-*.log)
-	$(foreach tool,$(BINUTILS_TOOLS),$(call safe_rm,$(TOOLCHAIN_ROOT)/bin/$(TARGET)-$(tool)))
-	$(call safe_rm_glob,$(TOOLCHAIN_ROOT)/lib,libbfd.*)
-	$(call safe_rm_glob,$(TOOLCHAIN_ROOT)/lib,libopcodes.*)
-	$(call safe_rm_glob,$(TOOLCHAIN_ROOT)/lib,libiberty.*)
-	$(call safe_rm_glob,$(TOOLCHAIN_ROOT)/lib,libctf.*)
-	$(call safe_rm_glob,$(TOOLCHAIN_ROOT)/lib,libctf-nobfd.*)
-	$(call safe_rm_glob,$(TOOLCHAIN_ROOT)/lib,libgprofng.*)
+	$(call safe_remove,$(BINUTILS2_BUILD_DIR))
+	$(call safe_remove_glob,$(LOGS_DIR),binutils-stage2-*.log)
+	$(foreach tool,$(BINUTILS_TOOLS),$(call safe_remove,$(TOOLCHAIN_ROOT)/bin/$(TARGET)-$(tool)))
+	$(call safe_remove_glob,$(TOOLCHAIN_ROOT)/lib,libbfd.*)
+	$(call safe_remove_glob,$(TOOLCHAIN_ROOT)/lib,libopcodes.*)
+	$(call safe_remove_glob,$(TOOLCHAIN_ROOT)/lib,libiberty.*)
+	$(call safe_remove_glob,$(TOOLCHAIN_ROOT)/lib,libctf.*)
+	$(call safe_remove_glob,$(TOOLCHAIN_ROOT)/lib,libctf-nobfd.*)
+	$(call safe_remove_glob,$(TOOLCHAIN_ROOT)/lib,libgprofng.*)
 
 clean-gcc: clean-musl ## Remove GCC build directory
 	@echo "==> Cleaning GCC build outputs"
-	$(call safe_rm,$(GCC_BUILD_DIR))
-	$(call safe_rm,$(GCC_SRC_DIR))
-	$(call safe_rm,$(GCC_STAMP))
-	$(call safe_rm,$(GCC_ARCHIVE))
-	$(call safe_rm_glob,$(LOGS_DIR),gcc-stage1-*.log)
-	$(call safe_rm_glob,$(LOGS_DIR),gcc-stage2-*.log)
-	$(foreach tool,$(GCC_TOOLS),$(call safe_rm,$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-$(tool)))
-	$(foreach tool,$(GCC_TOOLS),$(call safe_rm,$(TOOLCHAIN_ROOT)/bin/$(TARGET)-$(tool)))
-	$(call safe_rm,$(STAGE1_TOOLCHAIN_ROOT)/lib/gcc/$(TARGET))
-	$(call safe_rm,$(TOOLCHAIN_ROOT)/lib/gcc/$(TARGET))
-	$(call safe_rm,$(STAGE1_TOOLCHAIN_ROOT)/libexec/gcc/$(TARGET))
-	$(call safe_rm,$(TOOLCHAIN_ROOT)/libexec/gcc/$(TARGET))
-	$(call safe_rm,$(STAGE1_TOOLCHAIN_ROOT)/$(TARGET)/lib)
-	$(call safe_rm,$(STAGE1_TOOLCHAIN_ROOT)/$(TARGET)/lib64)
-	$(call safe_rm,$(STAGE1_TOOLCHAIN_ROOT)/$(TARGET)/include)
-	$(call safe_rm,$(TOOLCHAIN_ROOT)/$(TARGET)/lib)
-	$(call safe_rm,$(TOOLCHAIN_ROOT)/$(TARGET)/lib64)
-	$(call safe_rm,$(TOOLCHAIN_ROOT)/$(TARGET)/include)
+	$(call safe_remove,$(GCC_BUILD_DIR))
+	$(call safe_remove,$(GCC_SRC_DIR))
+	$(call safe_remove,$(GCC_STAMP))
+	$(call safe_remove,$(GCC_ARCHIVE))
+	$(call safe_remove_glob,$(LOGS_DIR),gcc-stage1-*.log)
+	$(call safe_remove_glob,$(LOGS_DIR),gcc-stage2-*.log)
+	$(foreach tool,$(GCC_TOOLS),$(call safe_remove,$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-$(tool)))
+	$(foreach tool,$(GCC_TOOLS),$(call safe_remove,$(TOOLCHAIN_ROOT)/bin/$(TARGET)-$(tool)))
+	$(call safe_remove,$(STAGE1_TOOLCHAIN_ROOT)/lib/gcc/$(TARGET))
+	$(call safe_remove,$(TOOLCHAIN_ROOT)/lib/gcc/$(TARGET))
+	$(call safe_remove,$(STAGE1_TOOLCHAIN_ROOT)/libexec/gcc/$(TARGET))
+	$(call safe_remove,$(TOOLCHAIN_ROOT)/libexec/gcc/$(TARGET))
+	$(call safe_remove,$(STAGE1_TOOLCHAIN_ROOT)/$(TARGET)/lib)
+	$(call safe_remove,$(STAGE1_TOOLCHAIN_ROOT)/$(TARGET)/lib64)
+	$(call safe_remove,$(STAGE1_TOOLCHAIN_ROOT)/$(TARGET)/include)
+	$(call safe_remove,$(TOOLCHAIN_ROOT)/$(TARGET)/lib)
+	$(call safe_remove,$(TOOLCHAIN_ROOT)/$(TARGET)/lib64)
+	$(call safe_remove,$(TOOLCHAIN_ROOT)/$(TARGET)/include)
 
 clean-gcc-stage2:
 	@echo "==> Cleaning GCC stage2 outputs"
-	$(call safe_rm_glob,$(LOGS_DIR),gcc-stage2-*.log)
-	$(foreach tool,$(GCC_TOOLS),$(call safe_rm,$(TOOLCHAIN_ROOT)/bin/$(TARGET)-$(tool)))
-	$(call safe_rm,$(TOOLCHAIN_ROOT)/lib/gcc/$(TARGET))
-	$(call safe_rm,$(TOOLCHAIN_ROOT)/libexec/gcc/$(TARGET))
-	$(call safe_rm,$(TOOLCHAIN_ROOT)/$(TARGET)/lib)
-	$(call safe_rm,$(TOOLCHAIN_ROOT)/$(TARGET)/lib64)
-	$(call safe_rm,$(TOOLCHAIN_ROOT)/$(TARGET)/include)
+	$(call safe_remove_glob,$(LOGS_DIR),gcc-stage2-*.log)
+	$(foreach tool,$(GCC_TOOLS),$(call safe_remove,$(TOOLCHAIN_ROOT)/bin/$(TARGET)-$(tool)))
+	$(call safe_remove,$(TOOLCHAIN_ROOT)/lib/gcc/$(TARGET))
+	$(call safe_remove,$(TOOLCHAIN_ROOT)/libexec/gcc/$(TARGET))
+	$(call safe_remove,$(TOOLCHAIN_ROOT)/$(TARGET)/lib)
+	$(call safe_remove,$(TOOLCHAIN_ROOT)/$(TARGET)/lib64)
+	$(call safe_remove,$(TOOLCHAIN_ROOT)/$(TARGET)/include)
 
 clean-musl: clean-binutils-stage2 clean-gcc-stage2 ## Remove musl build directory
 	@echo "==> Cleaning musl build outputs"
-	$(call safe_rm,$(MUSL_BUILD_DIR))
-	$(call safe_rm,$(MUSL_SRC_DIR))
-	$(call safe_rm,$(MUSL_STAMP))
-	$(call safe_rm,$(MUSL_ARCHIVE))
-	$(call safe_rm_glob,$(LOGS_DIR),musl-*.log)
-	$(foreach lib,$(MUSL_LIBS),$(call safe_rm_glob,$(SYSROOT)/lib,$(lib).*))
-	$(foreach lib,$(MUSL_LIBS),$(call safe_rm_glob,$(SYSROOT)/usr/lib,$(lib).*))
-	$(call safe_rm,$(SYSROOT)/lib/$(MUSL_LDSO))
-	$(call safe_rm,$(SYSROOT)/usr/lib/$(MUSL_LDSO))
-	$(call safe_rm,$(SYSROOT)/lib/crt1.o)
-	$(call safe_rm,$(SYSROOT)/lib/crti.o)
-	$(call safe_rm,$(SYSROOT)/lib/crtn.o)
-	$(call safe_rm,$(SYSROOT)/usr/lib/crt1.o)
-	$(call safe_rm,$(SYSROOT)/usr/lib/crti.o)
-	$(call safe_rm,$(SYSROOT)/usr/lib/crtn.o)
+	$(call safe_remove,$(MUSL_BUILD_DIR))
+	$(call safe_remove,$(MUSL_SRC_DIR))
+	$(call safe_remove,$(MUSL_STAMP))
+	$(call safe_remove,$(MUSL_ARCHIVE))
+	$(call safe_remove_glob,$(LOGS_DIR),musl-*.log)
+	$(foreach lib,$(MUSL_LIBS),$(call safe_remove_glob,$(SYSROOT)/lib,$(lib).*))
+	$(foreach lib,$(MUSL_LIBS),$(call safe_remove_glob,$(SYSROOT)/usr/lib,$(lib).*))
+	$(call safe_remove,$(SYSROOT)/lib/$(MUSL_LDSO))
+	$(call safe_remove,$(SYSROOT)/usr/lib/$(MUSL_LDSO))
+	$(call safe_remove,$(SYSROOT)/lib/crt1.o)
+	$(call safe_remove,$(SYSROOT)/lib/crti.o)
+	$(call safe_remove,$(SYSROOT)/lib/crtn.o)
+	$(call safe_remove,$(SYSROOT)/usr/lib/crt1.o)
+	$(call safe_remove,$(SYSROOT)/usr/lib/crti.o)
+	$(call safe_remove,$(SYSROOT)/usr/lib/crtn.o)
 	@include_dir="$(SYSROOT)/usr/include"; \
 	abs="$(abspath $(SYSROOT)/usr/include)"; \
 	repo="$(REPO_ROOT)"; \
@@ -232,14 +223,14 @@ clean-musl: clean-binutils-stage2 clean-gcc-stage2 ## Remove musl build director
 
 clean-kheaders: clean-gcc ## Remove Linux UAPI headers build directory
 	@echo "==> Cleaning Linux headers build outputs"
-	$(call safe_rm,$(LINUX_HEADERS_BUILD_DIR))
-	$(call safe_rm,$(LINUX_SRC_DIR))
-	$(call safe_rm,$(LINUX_STAMP))
-	$(call safe_rm,$(LINUX_ARCHIVE))
-	$(call safe_rm_glob,$(LOGS_DIR),linux-headers-*.log)
-	$(call safe_rm,$(SYSROOT)/usr/include/linux)
-	$(call safe_rm,$(SYSROOT)/usr/include/asm)
-	$(call safe_rm,$(SYSROOT)/usr/include/asm-generic)
+	$(call safe_remove,$(LINUX_HEADERS_BUILD_DIR))
+	$(call safe_remove,$(LINUX_SRC_DIR))
+	$(call safe_remove,$(LINUX_STAMP))
+	$(call safe_remove,$(LINUX_ARCHIVE))
+	$(call safe_remove_glob,$(LOGS_DIR),linux-headers-*.log)
+	$(call safe_remove,$(SYSROOT)/usr/include/linux)
+	$(call safe_remove,$(SYSROOT)/usr/include/asm)
+	$(call safe_remove,$(SYSROOT)/usr/include/asm-generic)
 
 check: verify-toolchain
 
