@@ -4,7 +4,7 @@
 ## make toolchain  Build BugleOS cross-compiling toolchain for host architecture
 ## make x86_64  Build BugleOS cross-compiling toolchain for x86_64 architecture
 ## make aarch64  Build BugleOS cross-compiling toolchain for aarch64 architecture
-## make clean-toolchain  Remove toolchain output (requires FORCE=1)
+## make clean-toolchain  Remove toolchain output (includes logs/output cleanup)
 ## make clean-binutils  Remove binutils builds, logs, sources, and installed outputs
 ## make clean-gcc  Remove GCC builds, logs, sources, and installed outputs
 ## make clean-musl  Remove musl builds, logs, sources, and installed outputs
