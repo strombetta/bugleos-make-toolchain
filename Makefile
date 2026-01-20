@@ -115,8 +115,10 @@ verify-toolchain: guard-TARGET
 
 toolchain: binutils-stage1 linux-headers gcc-stage1 musl binutils-stage2 gcc-stage2
 
-clean-toolchain: clean-binutils clean-gcc clean-musl clean-kheaders clean-binutils-stage2 clean-gcc-stage2 ## Remove toolchain output for the current triplet
+clean-toolchain: clean-binutils clean-gcc clean-musl clean-kheaders clean-binutils-stage2 clean-gcc-stage2 ## Remove toolchain output for the current triplet (plus logs/output cleanup)
 	@echo "==> Removing toolchain outputs for $(TRIPLET)"
+	$(call safe_remove,$(LOGS_DIR))
+	$(call safe_remove,$(OUT_DIR))
 	$(call safe_remove,$(TOOLCHAIN_TARGET_DIR))
 	$(call safe_remove,$(STAGE1_TOOLCHAIN_ROOT))
 
