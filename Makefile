@@ -29,9 +29,6 @@ include Makefile.help
 
 MAKEFLAGS += --no-print-directory
 
-ARCHES := aarch64 x86_64
-load_target = $(strip $(shell awk -F':=' '/^TARGET/ {gsub(/[ \t]/,"",$$2);print $$2}' config/arch/$(1).mk))
-
 TRIPLET ?= $(TARGET)
 
 REPO_ROOT := $(abspath $(CURDIR))
@@ -79,13 +76,10 @@ BINUTILS_TOOLS := addr2line ar as c++filt elfedit gprof ld ld.bfd ld.gold nm obj
 GCC_TOOLS := gcc g++ cpp gcc-ar gcc-nm gcc-ranlib gcov gcov-dump gcov-tool
 MUSL_LIBS := libc libm libpthread librt libdl libutil libxnet libresolv libcrypt
 
-.PHONY: $(ARCHES) toolchain binutils-stage1 linux-headers gcc-stage1 musl binutils-stage2 gcc-stage2 verify-toolchain \
+.PHONY: toolchain binutils-stage1 linux-headers gcc-stage1 musl binutils-stage2 gcc-stage2 verify-toolchain \
 	clean-toolchain clean-binutils clean-gcc clean-musl clean-kheaders \
 	clean-binutils-stage2 clean-gcc-stage2 \
 	check sanity
-
-$(ARCHES):
-	@$(MAKE) TARGET=$(call load_target,$@) toolchain
 
 guard-%:
 	@test -n "$($*)" || { echo "ERROR: $* is not set"; exit 1; }

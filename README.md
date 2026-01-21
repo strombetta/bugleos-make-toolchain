@@ -29,23 +29,22 @@ scripts/fetch-sources.sh
 scripts/verify-checksums.sh
 ```
 
-Build a toolchain for a specific architecture:
-
-```
-make x86_64
-make aarch64
-```
-
-The umbrella target `toolchain` builds the current `TARGET` from `config/paths.mk` or an override passed on the command line. By default, `TARGET` matches the host architecture when it is supported:
+Build a toolchain for a specific architecture by overriding `TARGET` on the command line. The umbrella target `toolchain` builds the current `TARGET` from `config/paths.mk` or an override passed on the command line. By default, `TARGET` matches the host architecture when it is supported:
 
 ```
 make TARGET=aarch64-bugleos-linux-musl toolchain
 ```
 
+To list optional variables for a specific target, pass the target name after `help`:
+
+```
+make help toolchain
+```
+
 To install Linux UAPI headers into the sysroot, set `WITH_LINUX_HEADERS=1` and update `LINUX_VERSION`/`LINUX_SHA256` in `config/versions.mk`:
 
 ```
-make WITH_LINUX_HEADERS=1 x86_64
+make WITH_LINUX_HEADERS=1 TARGET=x86_64-bugleos-linux-musl toolchain
 ```
 
 ## Using the toolchain environment
