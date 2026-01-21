@@ -35,16 +35,22 @@ Build a toolchain for a specific architecture by overriding `TARGET` on the comm
 make TARGET=aarch64-bugleos-linux-musl toolchain
 ```
 
-To list optional variables for a specific target, pass the target name after `help`:
+To list optional variables for a specific target, pass the target name via `TARGET`:
 
 ```
-make help toolchain
+make help TARGET=toolchain
 ```
 
 To install Linux UAPI headers into the sysroot, set `WITH_LINUX_HEADERS=1` and update `LINUX_VERSION`/`LINUX_SHA256` in `config/versions.mk`:
 
 ```
 make WITH_LINUX_HEADERS=1 TARGET=x86_64-bugleos-linux-musl toolchain
+```
+
+You can override build parallelism and the toolchain output root:
+
+```
+make JOBS=8 TOOLCHAIN_ROOT=/opt/bugleos/toolchain TARGET=x86_64-bugleos-linux-musl toolchain
 ```
 
 ## Using the toolchain environment
