@@ -1,9 +1,7 @@
 # Help target and documentation entries.
 
 ## make help  Show this help message
-## make toolchain  Build BugleOS cross-compiling toolchain for host architecture
-## make x86_64  Build BugleOS cross-compiling toolchain for x86_64 architecture
-## make aarch64  Build BugleOS cross-compiling toolchain for aarch64 architecture
+## make toolchain  Build BugleOS cross-compiling toolchain for TARGET (defaults to host when supported)
 ## make clean-toolchain  Remove toolchain output (includes logs/output cleanup)
 ## make clean-binutils  Remove binutils builds, logs, sources, and installed outputs
 ## make clean-gcc  Remove GCC builds, logs, sources, and installed outputs
@@ -15,11 +13,46 @@ HELP_COL_WIDTH ?= 24
 HELP_FILES = $(strip $(firstword $(MAKEFILE_LIST)) $(MAKEFILE_LIST) $(MAKEFILES) $(INCLUDES) $(MK_FILES))
 HELP_FILES_EXISTING = $(strip $(foreach f,$(HELP_FILES),$(wildcard $(f))))
 
+HELP_TARGETS := $(filter-out help,$(MAKECMDGOALS))
+
+ifneq ($(strip $(HELP_TARGETS)),)
+.PHONY: $(HELP_TARGETS)
+$(HELP_TARGETS):
+	@:
+endif
+
 .PHONY: help
 help:
 	@echo "BugleOS Cross-compiling Toolchain Builder"
 	@echo
 	@echo "Targets:"
+	@if [ -n "$(HELP_TARGETS)" ]; then \
+		subject="$(word 1,$(HELP_TARGETS))"; \
+		echo "  help $$subject"; \
+		case "$$subject" in \
+			toolchain) \
+				echo "    make toolchain [TARGET=<triplet>] [WITH_LINUX_HEADERS=1]"; \
+				echo "      TARGET: target triplet (defaults to host when supported)."; \
+				echo "      WITH_LINUX_HEADERS=1: install Linux UAPI headers into SYSROOT."; \
+				;; \
+			verify-toolchain) \
+				echo "    make verify-toolchain TARGET=<triplet>"; \
+				echo "      TARGET: target triplet to verify."; \
+				;; \
+			check) \
+				echo "    make check TARGET=<triplet>"; \
+				echo "      TARGET: target triplet to verify."; \
+				;; \
+			clean-toolchain) \
+				echo "    make clean-toolchain [TRIPLET=<triplet>]"; \
+				echo "      TRIPLET: target triplet to clean (defaults to TARGET)."; \
+				;; \
+				*) \
+					echo "    No additional help available for '$$subject'."; \
+					;; \
+			esac; \
+		exit 0; \
+	fi
 	@awk -v width="$(HELP_COL_WIDTH)" 'BEGIN { FS=":.*##"; if (width <= 0) width=24; } \
 		/^[A-Za-z0-9][A-Za-z0-9_%.\/-]*:.*##/ { \
 			target=$$1; \
@@ -58,3 +91,5 @@ help:
 				printf "  %s\n", line; \
 			} \
 		}' $(HELP_FILES_EXISTING)
+	@echo
+	@echo "See 'make help <target>' to read about a specific target."
