@@ -16,43 +16,42 @@ HELP_FILES_EXISTING = $(strip $(foreach f,$(HELP_FILES),$(wildcard $(f))))
 
 .PHONY: help
 help:
-	@echo "BugleOS Cross-compiling Toolchain Builder"
-	@echo
-	@if [ -n "$(RECIPE)" ]; then \
-		recipe="$(RECIPE)"; \
-		echo "Recipe: $$recipe"; \
-		case "$$recipe" in \
+	@if [ -n "$(TARGET)" ] || [ -n "$(RECIPE)" ]; then \
+		target="$(TARGET)"; \
+		if [ -z "$$target" ]; then \
+			target="$(RECIPE)"; \
+		fi; \
+		case "$$target" in \
 			toolchain) \
-				echo "  Description: Build BugleOS cross-compiling toolchain for TARGET (defaults to host when supported)."; \
-				echo "  Optional parameters:"; \
-				echo "    TARGET=<triplet> (defaults to host when supported)."; \
-				echo "    WITH_LINUX_HEADERS=1 (install Linux UAPI headers into SYSROOT)."; \
-				;; \
-			clean|clean-toolchain) \
-				echo "  Description: Remove toolchain output (includes logs/output cleanup)."; \
-				echo "  Optional parameters:"; \
-				echo "    TRIPLET=<triplet> (defaults to TARGET)."; \
-				;; \
-			check) \
-				echo "  Description: Sanity-check an existing toolchain."; \
-				echo "  Optional parameters:"; \
-				echo "    TARGET=<triplet> (target triplet to verify)."; \
+				echo "Usage: make toolchain [options]"; \
+				echo "   Build cross-compiling toolchain."; \
+				echo; \
+				echo "Options:"; \
+				echo "    TARGET=<triplet>       Specify for what architecture to build (default: <host>)."; \
+				echo "    WITH_LINUX_HEADERS=1   Install Linux UAPI headers into SYSROOT (default: 0)."; \
+				echo "    JOBS=<n>               Parallel build jobs (default: auto-detected)."; \
+				echo "    TOOLCHAIN_ROOT=<path>  Override toolchain output root (default: out/toolchain)."; \
 				;; \
 			help) \
-				echo "  Description: Show this help message."; \
-				echo "  Optional parameters: none."; \
+				echo "Usage: make help [options]"; \
+				echo "   Show this help message."; \
+				echo; \
+				echo "Options:"; \
+				echo "    TARGET=<target>   Show further information about a target."; \
 				;; \
 			*) \
-				echo "  Description: No help available for '$$recipe'."; \
-				echo "  Optional parameters: unknown."; \
+				echo "Usage: make $$target [options]"; \
+				echo "   No help available for '$$target'."; \
 				;; \
 		esac; \
 		exit 0; \
 	fi
-	@echo "Targets:"
-	@printf "  make %-*s %s\n" "$(HELP_COL_WIDTH)" "toolchain" "Build BugleOS cross-compiling toolchain for TARGET (defaults to host when supported)"
-	@printf "  make %-*s %s\n" "$(HELP_COL_WIDTH)" "clean" "Remove toolchain output (includes logs/output cleanup)"
-	@printf "  make %-*s %s\n" "$(HELP_COL_WIDTH)" "check" "Sanity-check an existing toolchain"
-	@printf "  make %-*s %s\n" "$(HELP_COL_WIDTH)" "help" "Show this help message"
+	@echo "BugleOS Cross-compiling Toolchain Builder"
 	@echo
-	@echo "See 'make help RECIPE=<target>' for details."
+	@echo "Available targets:"
+	@echo "   make toolchain   Build cross-compiling toolchain."
+	@echo "   make clean       Remove toolchain output."
+	@echo "   make check       Check an existing toolchain."
+	@echo "   make help        Show this help message."
+	@echo
+	@echo "See 'make help TARGET=<target>' for details."
