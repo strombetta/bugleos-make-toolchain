@@ -79,7 +79,7 @@ MUSL_LIBS := libc libm libpthread librt libdl libutil libxnet libresolv libcrypt
 .PHONY: toolchain binutils-stage1 linux-headers gcc-stage1 musl binutils-stage2 gcc-stage2 verify-toolchain \
 	clean-toolchain clean-binutils clean-gcc clean-musl clean-kheaders \
 	clean-binutils-stage2 clean-gcc-stage2 \
-	check sanity
+	clean check sanity
 
 guard-%:
 	@test -n "$($*)" || { echo "ERROR: $* is not set"; exit 1; }
@@ -108,6 +108,8 @@ verify-toolchain: guard-TARGET
 		$(ROOT_DIR)/scripts/verify-toolchain.sh
 
 toolchain: binutils-stage1 linux-headers gcc-stage1 musl binutils-stage2 gcc-stage2
+
+clean: clean-toolchain ## Remove toolchain output for the current triplet (plus logs/output cleanup)
 
 clean-toolchain: clean-binutils clean-gcc clean-musl clean-kheaders clean-binutils-stage2 clean-gcc-stage2 ## Remove toolchain output for the current triplet (plus logs/output cleanup)
 	@echo "==> Removing toolchain outputs for $(TRIPLET)"
