@@ -1,0 +1,38 @@
+#
+# Copyright (c) 2025 Sebastiano Trombetta
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+include config/paths.mk
+include make/common.mk
+
+ROOT_DIR := $(abspath $(ROOT_DIR))
+
+MAKEFLAGS += --no-print-directory
+
+.PHONY: check
+
+guard-%:
+	@test -n "$($*)" || { echo "ERROR: $* is not set"; exit 1; }
+
+check: guard-TARGET
+	@ROOT_DIR=$(ROOT_DIR) TARGET=$(TARGET) TOOLCHAIN_ROOT=$(TOOLCHAIN_ROOT) TOOLCHAIN_TARGET_DIR=$(TOOLCHAIN_TARGET_DIR) \
+		SYSROOT=$(SYSROOT) PREFIX=$(TOOLCHAIN_ROOT) \
+		PATH="$(TOOLCHAIN_ROOT)/bin:$(TOOLCHAIN_TARGET_DIR)/bin:$$PATH" \
+		$(ROOT_DIR)/scripts/check-toolchain.sh
