@@ -101,45 +101,47 @@ check_gcc() {
 check_sysroot() {
   ensure_safe_sysroot
 
-  for dir in "$SYSROOT/usr/include" "$SYSROOT/usr/lib" "$SYSROOT/lib"; do
-    [ -d "$dir" ] || fail "missing sysroot directory: $dir"
-  done
-}
+[ -d "$SYSROOT" ] || fail "missing sysroot directory: $SYSROOT"
 
-check_linux_headers() {
-  ensure_safe_sysroot
+for tool in gcc ld as ar ranlib strip readelf; do
+  tool_path="$(resolve_tool "$tool")" || tool_path=""
+  [ -n "$tool_path" ] || fail "missing toolchain binary: $TARGET-$tool (searched $PREFIX/bin and $TOOLCHAIN_TARGET_DIR/bin)"
+done
 
-  KERNEL_HEADER=""
-  if [ -f "$SYSROOT/usr/include/linux/version.h" ]; then
-    KERNEL_HEADER="$SYSROOT/usr/include/linux/version.h"
-  elif [ -f "$SYSROOT/usr/include/linux/utsrelease.h" ]; then
-    KERNEL_HEADER="$SYSROOT/usr/include/linux/utsrelease.h"
-  fi
-  [ -n "$KERNEL_HEADER" ] || fail "missing kernel headers under $SYSROOT/usr/include/linux"
-}
+require_cmd "$TARGET-gcc"
+require_cmd "$TARGET-readelf"
 
-check_musl() {
-  ensure_safe_sysroot
-  require_cmd "$TARGET-readelf"
+DUMPMACHINE=$("$TARGET"-gcc -dumpmachine 2>/dev/null || true)
+[ "$DUMPMACHINE" = "$TARGET" ] || fail "gcc -dumpmachine returned '$DUMPMACHINE' (expected '$TARGET')"
 
-  ldso_name="ld-musl-${TARGET_ARCH}.so.1"
-  ldso_path=""
-  if [ -e "$SYSROOT/lib/$ldso_name" ]; then
-    ldso_path="$SYSROOT/lib/$ldso_name"
-  elif [ -e "$SYSROOT/usr/lib/$ldso_name" ]; then
-    ldso_path="$SYSROOT/usr/lib/$ldso_name"
-  else
-    for candidate in "$SYSROOT/lib"/ld-musl-*.so.1 "$SYSROOT/usr/lib"/ld-musl-*.so.1; do
-      if [ -e "$candidate" ]; then
-        ldso_path="$candidate"
-        break
-      fi
-    done
-  fi
-  [ -n "$ldso_path" ] || fail "missing musl loader (expected $SYSROOT/lib/$ldso_name or $SYSROOT/usr/lib/$ldso_name)"
+if ! "$TARGET"-gcc -v 2>&1 | grep -F "Target: $TARGET" >/dev/null; then
+  fail "gcc -v does not report Target: $TARGET"
+fi
 
-  libc_path=""
-  for candidate in "$SYSROOT/lib/libc.so" "$SYSROOT/usr/lib/libc.so" "$SYSROOT/lib/libc.a" "$SYSROOT/usr/lib/libc.a"; do
+EXPECTED_SYSROOT=$(normalize "$SYSROOT")
+PRINTED_SYSROOT=$(normalize "$("$TARGET"-gcc --print-sysroot 2>/dev/null || true)")
+[ "$PRINTED_SYSROOT" = "$EXPECTED_SYSROOT" ] || fail "gcc --print-sysroot returned '$PRINTED_SYSROOT' (expected '$EXPECTED_SYSROOT')"
+
+for dir in "$SYSROOT/usr/include" "$SYSROOT/usr/lib" "$SYSROOT/lib"; do
+  [ -d "$dir" ] || fail "missing sysroot directory: $dir"
+done
+
+KERNEL_HEADER=""
+if [ -f "$SYSROOT/usr/include/linux/version.h" ]; then
+  KERNEL_HEADER="$SYSROOT/usr/include/linux/version.h"
+elif [ -f "$SYSROOT/usr/include/linux/utsrelease.h" ]; then
+  KERNEL_HEADER="$SYSROOT/usr/include/linux/utsrelease.h"
+fi
+[ -n "$KERNEL_HEADER" ] || fail "missing kernel headers under $SYSROOT/usr/include/linux"
+
+ldso_name="ld-musl-${TARGET_ARCH}.so.1"
+ldso_path=""
+if [ -e "$SYSROOT/lib/$ldso_name" ]; then
+  ldso_path="$SYSROOT/lib/$ldso_name"
+elif [ -e "$SYSROOT/usr/lib/$ldso_name" ]; then
+  ldso_path="$SYSROOT/usr/lib/$ldso_name"
+else
+  for candidate in "$SYSROOT/lib"/ld-musl-*.so.1 "$SYSROOT/usr/lib"/ld-musl-*.so.1; do
     if [ -e "$candidate" ]; then
       libc_path="$candidate"
       break
