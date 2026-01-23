@@ -189,7 +189,7 @@ clean-kheaders: clean-gcc ## Remove Linux UAPI headers build directory
 	$(call do_safe_remove,$(SYSROOT)/usr/include/asm)
 	$(call do_safe_remove,$(SYSROOT)/usr/include/asm-generic)
 
-check: guard-TARGET
+check: guard-TARGET toolchain
 	@$(MAKE) -f Makefile.check TARGET=$(TARGET) check
 
 sanity:
