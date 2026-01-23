@@ -19,6 +19,18 @@ require_cmd() {
   command -v "$1" >/dev/null 2>&1 || fail "$1 not found in PATH"
 }
 
+resolve_tool() {
+  tool="$1"
+  for dir in "$PREFIX/bin" "$TOOLCHAIN_TARGET_DIR/bin"; do
+    candidate="$dir/$TARGET-$tool"
+    if [ -x "$candidate" ]; then
+      printf "%s\n" "$candidate"
+      return 0
+    fi
+  done
+  return 1
+}
+
 normalize() {
   printf "%s" "${1%/}"
 }
@@ -47,8 +59,8 @@ esac
 [ -d "$SYSROOT" ] || fail "missing sysroot directory: $SYSROOT"
 
 for tool in gcc ld as ar ranlib strip readelf; do
-  tool_path="$PREFIX/bin/$TARGET-$tool"
-  [ -x "$tool_path" ] || fail "missing toolchain binary: $tool_path"
+  tool_path="$(resolve_tool "$tool")" || tool_path=""
+  [ -n "$tool_path" ] || fail "missing toolchain binary: $TARGET-$tool (searched $PREFIX/bin and $TOOLCHAIN_TARGET_DIR/bin)"
 done
 
 require_cmd "$TARGET-gcc"
