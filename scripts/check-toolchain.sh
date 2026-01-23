@@ -54,15 +54,15 @@ done
 require_cmd "$TARGET-gcc"
 require_cmd "$TARGET-readelf"
 
-DUMPMACHINE=$($TARGET-gcc -dumpmachine 2>/dev/null || true)
+DUMPMACHINE=$("$TARGET"-gcc -dumpmachine 2>/dev/null || true)
 [ "$DUMPMACHINE" = "$TARGET" ] || fail "gcc -dumpmachine returned '$DUMPMACHINE' (expected '$TARGET')"
 
-if ! $TARGET-gcc -v 2>&1 | grep -F "Target: $TARGET" >/dev/null; then
+if ! "$TARGET"-gcc -v 2>&1 | grep -F "Target: $TARGET" >/dev/null; then
   fail "gcc -v does not report Target: $TARGET"
 fi
 
 EXPECTED_SYSROOT=$(normalize "$SYSROOT")
-PRINTED_SYSROOT=$(normalize "$($TARGET-gcc --print-sysroot 2>/dev/null || true)")
+PRINTED_SYSROOT=$(normalize "$("$TARGET"-gcc --print-sysroot 2>/dev/null || true)")
 [ "$PRINTED_SYSROOT" = "$EXPECTED_SYSROOT" ] || fail "gcc --print-sysroot returned '$PRINTED_SYSROOT' (expected '$EXPECTED_SYSROOT')"
 
 for dir in "$SYSROOT/usr/include" "$SYSROOT/usr/lib" "$SYSROOT/lib"; do
@@ -109,7 +109,7 @@ if [ -d "$TARGET_BIN_DIR" ]; then
   fi
 fi
 
-if ! LC_ALL=C $TARGET-readelf -h "$ldso_path" 2>/dev/null | grep -F "Machine:" | grep -F "$EXPECTED_MACHINE" >/dev/null; then
+if ! LC_ALL=C "$TARGET"-readelf -h "$ldso_path" 2>/dev/null | grep -F "Machine:" | grep -F "$EXPECTED_MACHINE" >/dev/null; then
   fail "unexpected ELF machine for $ldso_path (expected $EXPECTED_MACHINE)"
 fi
 
