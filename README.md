@@ -77,6 +77,14 @@ To validate an existing build and ensure the compiler never falls back to host h
 make TARGET=aarch64-bugleos-linux-musl verify-toolchain
 ```
 
+## Validation: make check
+
+Run the toolchain validation target to assert that the installed binaries, sysroot, musl loader/libc, and kernel headers are present and match the requested target triplet and architecture:
+
+```
+make TARGET=aarch64-bugleos-linux-musl check
+```
+
 ## Cleaning / Resetting
 
 The Makefile provides a safe, explicit cleaning interface focused on per-package build artifacts and toolchain outputs. Use `TRIPLET=<triple>` (or `TARGET=<triple>`) to scope to a specific architecture. Destructive targets require `FORCE=1`.
