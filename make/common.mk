@@ -41,6 +41,48 @@ define do_step
 	exit 1; }
 endef
 
+define do_safe_remove
+	@target="$(1)"; \
+	abs="$(abspath $(1))"; \
+	repo="$(ROOT_DIR)"; \
+	if [ -z "$$target" ] || [ -z "$$abs" ] || [ "$$abs" = "/" ]; then \
+		echo "ERROR: Refusing to remove unsafe path '$$abs'."; \
+		exit 1; \
+	fi; \
+	if [ "$$abs" = "$$repo" ]; then \
+		echo "ERROR: Refusing to remove repository root '$$abs'."; \
+		exit 1; \
+	fi; \
+	case "$$abs" in "$$repo"|"$$repo"/*) ;; \
+	*) echo "ERROR: Refusing to remove $$abs (outside $$repo)."; exit 1;; \
+	esac; \
+	rm -rf -- "$$abs"
+endef
+
+define do_safe_remove_glob
+	@dir="$(1)"; \
+	pattern="$(2)"; \
+	abs="$(abspath $(1))"; \
+	repo="$(ROOT_DIR)"; \
+	if [ -z "$$dir" ] || [ -z "$$abs" ] || [ "$$abs" = "/" ]; then \
+		echo "ERROR: Refusing to remove unsafe path '$$abs'."; \
+		exit 1; \
+	fi; \
+	if [ "$$abs" = "$$repo" ]; then \
+		echo "ERROR: Refusing to remove repository root '$$abs'."; \
+		exit 1; \
+	fi; \
+	case "$$abs" in "$$repo"|"$$repo"/*) ;; \
+	*) echo "ERROR: Refusing to remove $$abs (outside $$repo)."; exit 1;; \
+	esac; \
+	rm -rf -- "$$abs"/$$pattern
+endef
+
+# $(call do_clean, LABEL)
+define do_clean
+	$(Q)printf "  %-8s %s\n" "CLEAN" "$(1)"
+endef
+
 # $(call do_download, LABEL, COMMAND, LOGFILE)
 define do_download
 	$(call do_step,DOWNLOAD,$(1),$(2),$(3))

@@ -1,0 +1,59 @@
+# Help target and documentation entries.
+
+## make help  Show this help message
+## make toolchain  Build BugleOS cross-compiling toolchain for TARGET (defaults to host when supported)
+## make clean  Remove toolchain output (includes logs/output cleanup)
+## make clean-toolchain  Remove toolchain output (includes logs/output cleanup)
+## make clean-binutils  Remove binutils builds, logs, sources, and installed outputs
+## make clean-gcc  Remove GCC builds, logs, sources, and installed outputs
+## make clean-musl  Remove musl builds, logs, sources, and installed outputs
+## make clean-kheaders  Remove Linux UAPI headers builds, logs, sources, and installed outputs
+## make check TARGET=<triplet>  Sanity-check an existing toolchain
+
+HELP_COL_WIDTH ?= 24
+HELP_FILES = $(strip $(firstword $(MAKEFILE_LIST)) $(MAKEFILE_LIST) $(MAKEFILES) $(INCLUDES) $(MK_FILES))
+HELP_FILES_EXISTING = $(strip $(foreach f,$(HELP_FILES),$(wildcard $(f))))
+HELP_HOST_TARGET := $(if $(HOST_TARGET),$(HOST_TARGET),unknown)
+HELP_TARGET := $(firstword $(strip \
+	$(if $(filter command\ line environment environment\ override,$(origin TARGET)),$(TARGET)) \
+	$(if $(filter command\ line environment environment\ override,$(origin RECIPE)),$(RECIPE)) \
+))
+
+.PHONY: help
+ifneq ($(HELP_TARGET),)
+help:
+	@case "$(HELP_TARGET)" in \
+		toolchain) \
+			echo "Usage: make toolchain [options]"; \
+			echo "   Build cross-compiling toolchain."; \
+			echo; \
+			echo "Options:"; \
+			echo "    TARGET=<triplet>       Specify for what architecture to build (default: $(HELP_HOST_TARGET))."; \
+			echo "    WITH_LINUX_HEADERS=1   Install Linux UAPI headers into SYSROOT (default: 0)."; \
+			echo "    JOBS=<n>               Parallel build jobs (default: auto-detected)."; \
+			echo "    TOOLCHAIN_ROOT=<path>  Override toolchain output root (default: out/toolchain)."; \
+			;; \
+		help) \
+			echo "Usage: make help [options]"; \
+			echo "   Show this help message."; \
+			echo; \
+			echo "Options:"; \
+			echo "    TARGET=<target>   Show further information about a target."; \
+			;; \
+		*) \
+			echo "Usage: make $(HELP_TARGET) [options]"; \
+			echo "   No help available for '$(HELP_TARGET)'."; \
+			;; \
+	esac
+else
+help:
+	@echo "BugleOS Cross-compiling Toolchain Builder"
+	@echo
+	@echo "Available targets:"
+	@echo "   make toolchain   Build cross-compiling toolchain."
+	@echo "   make clean       Remove toolchain output."
+	@echo "   make check       Check an existing toolchain."
+	@echo "   make help        Show this help message."
+	@echo
+	@echo "See 'make help TARGET=<target>' for details."
+endif

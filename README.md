@@ -29,23 +29,28 @@ scripts/fetch-sources.sh
 scripts/verify-checksums.sh
 ```
 
-Build a toolchain for a specific architecture:
-
-```
-make x86_64
-make aarch64
-```
-
-The umbrella target `toolchain` builds the current `TARGET` from `config/paths.mk` or an override passed on the command line. By default, `TARGET` matches the host architecture when it is supported:
+Build a toolchain for a specific architecture by overriding `TARGET` on the command line. The umbrella target `toolchain` builds the current `TARGET` from `config/paths.mk` or an override passed on the command line. By default, `TARGET` matches the host architecture when it is supported:
 
 ```
 make TARGET=aarch64-bugleos-linux-musl toolchain
 ```
 
+To list optional variables for a specific target, pass the target name via `TARGET`:
+
+```
+make help TARGET=toolchain
+```
+
 To install Linux UAPI headers into the sysroot, set `WITH_LINUX_HEADERS=1` and update `LINUX_VERSION`/`LINUX_SHA256` in `config/versions.mk`:
 
 ```
-make WITH_LINUX_HEADERS=1 x86_64
+make WITH_LINUX_HEADERS=1 TARGET=x86_64-bugleos-linux-musl toolchain
+```
+
+You can override build parallelism and the toolchain output root:
+
+```
+make JOBS=8 TOOLCHAIN_ROOT=/opt/bugleos/toolchain TARGET=x86_64-bugleos-linux-musl toolchain
 ```
 
 ## Using the toolchain environment
@@ -72,10 +77,19 @@ To validate an existing build and ensure the compiler never falls back to host h
 make TARGET=aarch64-bugleos-linux-musl verify-toolchain
 ```
 
-## Cleaning
+## Cleaning / Resetting
 
-- `make clean` removes `builds/` and `logs/` only.
-- `make distclean` additionally removes `out/` while preserving downloads.
+The Makefile provides a safe, explicit cleaning interface focused on per-package build artifacts and toolchain outputs. Use `TRIPLET=<triple>` (or `TARGET=<triple>`) to scope to a specific architecture. Destructive targets require `FORCE=1`.
+
+Per-package build cleans (they also remove downstream toolchain stages that depend on the selected package, following the `toolchain` build order):
+  - `make clean-binutils` removes binutils build trees, logs, sources, archives/stamps, and installed toolchain outputs.
+  - `make clean-gcc` removes GCC build trees, logs, sources, archives/stamps, and installed toolchain outputs.
+  - `make clean-musl` removes musl build trees, logs, sources, archives/stamps, and musl-installed sysroot headers/libs (preserving Linux UAPI headers).
+  - `make clean-kheaders` removes Linux UAPI header builds, logs, sources, archives/stamps, and the installed Linux headers under the sysroot.
+
+Destructive targets (require `FORCE=1`):
+
+- `make clean-toolchain FORCE=1` removes toolchain outputs (`out/toolchain/<triple>` and `out/toolchain-stage1`).
 
 ## Continuous Integration
 
