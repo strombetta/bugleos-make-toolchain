@@ -25,6 +25,8 @@ SOURCES_DIR ?= $(ROOT_DIR)/sources
 BUILDS_DIR ?= $(ROOT_DIR)/builds
 OUT_DIR ?= $(ROOT_DIR)/out
 LOGS_DIR ?= $(ROOT_DIR)/logs
+MINISIGN_KEY ?= $(OUT_DIR)/minisign.key
+MINISIGN_PUB ?= $(OUT_DIR)/minisign.pub
 
 HOST_ARCH := $(shell uname -m)
 HOST_TARGET := $(shell \
