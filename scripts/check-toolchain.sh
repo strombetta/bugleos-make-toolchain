@@ -38,17 +38,6 @@ normalize() {
   printf "%s" "${1%/}"
 }
 
-detect_toolchain_targets() {
-  targets=""
-  for dir in "$TOOLCHAIN_ROOT"/*; do
-    [ -d "$dir" ] || continue
-    [ -d "$dir/sysroot" ] || continue
-    target=$(basename "$dir")
-    targets="$targets $target"
-  done
-  printf "%s\n" "$targets"
-}
-
 select_toolchain_target() {
   if [ -d "$SYSROOT" ]; then
     return 0
@@ -57,17 +46,25 @@ select_toolchain_target() {
     fail "missing sysroot directory: $SYSROOT"
   fi
 
-  candidates="$(detect_toolchain_targets)"
-  # shellcheck disable=SC2086
-  set -- $candidates
-  if [ "$#" -eq 0 ]; then
+  candidates=""
+  candidate_count=0
+  for dir in "$TOOLCHAIN_ROOT"/*; do
+    [ -d "$dir" ] || continue
+    [ -d "$dir/sysroot" ] || continue
+    target=$(basename "$dir")
+    candidates="$candidates $target"
+    candidate_count=$((candidate_count + 1))
+  done
+
+  if [ "$candidate_count" -eq 0 ]; then
     fail "no toolchain sysroot found under $TOOLCHAIN_ROOT (expected $DEFAULT_SYSROOT)"
   fi
-  if [ "$#" -gt 1 ]; then
-    fail "multiple toolchain targets found under $TOOLCHAIN_ROOT: $* (set TARGET to select one)"
+  if [ "$candidate_count" -gt 1 ]; then
+    fail "multiple toolchain targets found under $TOOLCHAIN_ROOT: $candidates (set TARGET to select one)"
   fi
 
-  detected="$1"
+  detected=${candidates# }
+  detected=${detected%% *}
   if [ "$detected" != "$TARGET" ]; then
     echo "[check-toolchain] INFO: using detected toolchain target $detected instead of TARGET=$TARGET" >&2
   fi
