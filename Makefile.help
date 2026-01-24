@@ -1,14 +1,23 @@
-# Help target and documentation entries.
-
-## make help  Show this help message
-## make toolchain  Build BugleOS cross-compiling toolchain for TARGET (defaults to host when supported)
-## make clean  Remove toolchain output (includes logs/output cleanup)
-## make clean-toolchain  Remove toolchain output (includes logs/output cleanup)
-## make clean-binutils  Remove binutils builds, logs, sources, and installed outputs
-## make clean-gcc  Remove GCC builds, logs, sources, and installed outputs
-## make clean-musl  Remove musl builds, logs, sources, and installed outputs
-## make clean-kheaders  Remove Linux UAPI headers builds, logs, sources, and installed outputs
-## make check TARGET=<triplet>  Sanity-check an existing toolchain
+#
+# Copyright (c) Sebastiano Trombetta. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 
 HELP_COL_WIDTH ?= 24
 HELP_FILES = $(strip $(firstword $(MAKEFILE_LIST)) $(MAKEFILE_LIST) $(MAKEFILES) $(INCLUDES) $(MK_FILES))
