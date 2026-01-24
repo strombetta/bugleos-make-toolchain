@@ -15,12 +15,10 @@ jobs:
         include:
           - arch: x86_64
             runs-on: ubuntu-latest
-            target: x86_64
             triple: x86_64-bugleos-linux-musl
             label: x86_64
           - arch: aarch64
             runs-on: ubuntu-24.04-arm
-            target: aarch64
             triple: aarch64-bugleos-linux-musl
             label: aarch64
     permissions:
@@ -62,7 +60,7 @@ jobs:
       - name: Build ${{ matrix.arch }} toolchain
         run: |
           set -euo pipefail
-          make ${{ matrix.target }}
+          make TARGET=${{ matrix.triple }} toolchain
         
       - name: Upload build logs
         if: always()
