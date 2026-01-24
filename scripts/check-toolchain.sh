@@ -58,6 +58,7 @@ select_toolchain_target() {
   fi
 
   candidates="$(detect_toolchain_targets)"
+  # shellcheck disable=SC2086
   set -- $candidates
   if [ "$#" -eq 0 ]; then
     fail "no toolchain sysroot found under $TOOLCHAIN_ROOT (expected $DEFAULT_SYSROOT)"
