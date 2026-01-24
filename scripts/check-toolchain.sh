@@ -5,10 +5,9 @@ ROOT_DIR=${ROOT_DIR:-$(cd "$(dirname "$0")/.." && pwd)}
 TARGET=${TARGET:-x86_64-bugleos-linux-musl}
 TOOLCHAIN_ROOT=${TOOLCHAIN_ROOT:-$ROOT_DIR/out/toolchain}
 TOOLCHAIN_TARGET_DIR=${TOOLCHAIN_TARGET_DIR:-$TOOLCHAIN_ROOT/$TARGET}
-SYSROOT=${SYSROOT:-$TOOLCHAIN_TARGET_DIR/sysroot}
+DEFAULT_SYSROOT="$TOOLCHAIN_TARGET_DIR/sysroot"
+SYSROOT=${SYSROOT:-$DEFAULT_SYSROOT}
 PREFIX=${PREFIX:-$TOOLCHAIN_ROOT}
-
-PATH="$PREFIX/bin:$TOOLCHAIN_TARGET_DIR/bin:$PATH"
 
 fail() {
   echo "[check-toolchain] ERROR: $*" >&2
@@ -38,6 +37,48 @@ resolve_tool() {
 normalize() {
   printf "%s" "${1%/}"
 }
+
+detect_toolchain_targets() {
+  targets=""
+  for dir in "$TOOLCHAIN_ROOT"/*; do
+    [ -d "$dir" ] || continue
+    [ -d "$dir/sysroot" ] || continue
+    target=$(basename "$dir")
+    targets="$targets $target"
+  done
+  printf "%s\n" "$targets"
+}
+
+select_toolchain_target() {
+  if [ -d "$SYSROOT" ]; then
+    return 0
+  fi
+  if [ "$SYSROOT" != "$DEFAULT_SYSROOT" ]; then
+    fail "missing sysroot directory: $SYSROOT"
+  fi
+
+  candidates="$(detect_toolchain_targets)"
+  set -- $candidates
+  if [ "$#" -eq 0 ]; then
+    fail "no toolchain sysroot found under $TOOLCHAIN_ROOT (expected $DEFAULT_SYSROOT)"
+  fi
+  if [ "$#" -gt 1 ]; then
+    fail "multiple toolchain targets found under $TOOLCHAIN_ROOT: $* (set TARGET to select one)"
+  fi
+
+  detected="$1"
+  if [ "$detected" != "$TARGET" ]; then
+    echo "[check-toolchain] INFO: using detected toolchain target $detected instead of TARGET=$TARGET" >&2
+  fi
+  TARGET="$detected"
+  TOOLCHAIN_TARGET_DIR="$TOOLCHAIN_ROOT/$TARGET"
+  DEFAULT_SYSROOT="$TOOLCHAIN_TARGET_DIR/sysroot"
+  SYSROOT="$DEFAULT_SYSROOT"
+}
+
+select_toolchain_target
+
+PATH="$PREFIX/bin:$TOOLCHAIN_TARGET_DIR/bin:$PATH"
 
 TARGET_ARCH=${TARGET%%-*}
 [ -n "$TARGET_ARCH" ] || fail "unable to determine target architecture from TARGET=$TARGET"
