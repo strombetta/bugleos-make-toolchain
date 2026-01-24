@@ -15,6 +15,10 @@ fail() {
   exit 1
 }
 
+print_check() {
+  printf "  %-8s %s\n" "CHECK" "$1"
+}
+
 require_cmd() {
   command -v "$1" >/dev/null 2>&1 || fail "$1 not found in PATH"
 }
@@ -58,10 +62,14 @@ esac
 
 [ -d "$SYSROOT" ] || fail "missing sysroot directory: $SYSROOT"
 
-for tool in gcc ld as ar ranlib strip readelf; do
+for tool in ld as ar ranlib strip readelf; do
   tool_path="$(resolve_tool "$tool")" || tool_path=""
   [ -n "$tool_path" ] || fail "missing toolchain binary: $TARGET-$tool (searched $PREFIX/bin and $TOOLCHAIN_TARGET_DIR/bin)"
 done
+print_check "binutils"
+
+tool_path="$(resolve_tool gcc)" || tool_path=""
+[ -n "$tool_path" ] || fail "missing toolchain binary: $TARGET-gcc (searched $PREFIX/bin and $TOOLCHAIN_TARGET_DIR/bin)"
 
 require_cmd "$TARGET-gcc"
 require_cmd "$TARGET-readelf"
@@ -76,6 +84,7 @@ fi
 EXPECTED_SYSROOT=$(normalize "$SYSROOT")
 PRINTED_SYSROOT=$(normalize "$("$TARGET"-gcc --print-sysroot 2>/dev/null || true)")
 [ "$PRINTED_SYSROOT" = "$EXPECTED_SYSROOT" ] || fail "gcc --print-sysroot returned '$PRINTED_SYSROOT' (expected '$EXPECTED_SYSROOT')"
+print_check "gcc"
 
 for dir in "$SYSROOT/usr/include" "$SYSROOT/usr/lib" "$SYSROOT/lib"; do
   [ -d "$dir" ] || fail "missing sysroot directory: $dir"
@@ -88,6 +97,7 @@ elif [ -f "$SYSROOT/usr/include/linux/utsrelease.h" ]; then
   KERNEL_HEADER="$SYSROOT/usr/include/linux/utsrelease.h"
 fi
 [ -n "$KERNEL_HEADER" ] || fail "missing kernel headers under $SYSROOT/usr/include/linux"
+print_check "linux-headers"
 
 ldso_name="ld-musl-${TARGET_ARCH}.so.1"
 ldso_path=""
@@ -113,6 +123,7 @@ for candidate in "$SYSROOT/lib/libc.so" "$SYSROOT/usr/lib/libc.so" "$SYSROOT/lib
   fi
 done
 [ -n "$libc_path" ] || fail "missing musl libc artifact under $SYSROOT/lib or $SYSROOT/usr/lib"
+print_check "musl"
 
 TARGET_BIN_DIR="$PREFIX/$TARGET/bin"
 if [ -d "$TARGET_BIN_DIR" ]; then
@@ -125,4 +136,4 @@ if ! LC_ALL=C "$TARGET"-readelf -h "$ldso_path" 2>/dev/null | grep -F "Machine:"
   fail "unexpected ELF machine for $ldso_path (expected $EXPECTED_MACHINE)"
 fi
 
-echo "[OK] $TARGET_ARCH: gcc, binutils, sysroot, musl, kernel headers"
+print_check "sysroot"
