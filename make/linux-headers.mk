@@ -27,21 +27,20 @@ LINUX_KEYRING_FPRS := 647F28654894E3BD457199BE38DBBDC86092693E,F41BDF16F35CD80D9
 LINUX_SHA256 := 558c6bbab749492b34f99827fe807b0039a744693c21d3a7e03b3a48edaab96a
 
 THIS_MAKEFILE := $(lastword $(MAKEFILE_LIST))
-include $(abspath $(dir $(THIS_MAKEFILE))/common.mk)
+include $(abspath $(dir $(THIS_MAKEFILE))/helpers.mk)
 
 .PHONY: all
 all: linux-headers
 
 .PHONY: linux-headers
-linux-headers: ensure-dirs $(LINUX_HEADERS_BUILD_DIR)/.built-linux-headers
+linux-headers: $(PROGRESS_DIR)/.linux-headers-done
 
-$(LINUX_HEADERS_BUILD_DIR)/.built-linux-headers: $(LINUX_STAMP)
+$(PROGRESS_DIR)/.linux-headers-done: $(PROGRESS_DIR)/.linux-headers-built
+	$(Q)touch $@
+
+$(PROGRESS_DIR)/.linux-headers-built: $(PROGRESS_DIR)/.linux-headers-unpacked
 	$(Q)rm -rf "$(LINUX_HEADERS_BUILD_DIR)"
 	$(Q)mkdir -p "$(LINUX_HEADERS_BUILD_DIR)"
-
-	$(call do_step,EXTRACT,linux-headers, \
-		$(MAKE) -f "$(THIS_MAKEFILE)" unpack-linux, \
-		linux-headers-extract)
 
 	$(call do_step,INSTALL,linux-headers, \
 		$(call with_host_env, \
@@ -60,4 +59,20 @@ $(LINUX_HEADERS_BUILD_DIR)/.built-linux-headers: $(LINUX_STAMP)
 		), \
 		linux-headers-check)
 
+	$(Q)touch $@
+
+$(PROGRESS_DIR)/.linux-headers-unpacked: $(PROGRESS_DIR)/.linux-headers-verified
+	$(call do_unpack,linux, \
+		$(call with_host_env, \
+			rm -rf "$(LINUX_SRC_DIR)"; \
+			"$(TAR)" -xf "$(LINUX_ARCHIVE)" -C "$(SOURCES_DIR)"), \
+		linux-headers-unpack)
+	$(Q)touch $@
+
+$(PROGRESS_DIR)/.linux-headers-verified: $(PROGRESS_DIR)/.linux-headers-downloaded
+	$(call do_verify,linux,$(ROOT_DIR)/scripts/verify-checksums.sh linux,linux-headers-verify)
+	$(Q)touch $@
+
+$(PROGRESS_DIR)/.linux-headers-downloaded: | ensure-dirs
+	$(call do_download,linux,$(ROOT_DIR)/scripts/fetch-sources.sh linux,linux-headers-download)
 	$(Q)touch $@

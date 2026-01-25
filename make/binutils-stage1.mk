@@ -28,21 +28,20 @@ GNU_KEYRING_URL := https://ftp.gnu.org/gnu/gnu-keyring.gpg
 GNU_KEYRING_FPRS := 1397 5A70 E63C 361C 73AE  69EF 6EEB 81F8 981C 74C7
 
 THIS_MAKEFILE := $(lastword $(MAKEFILE_LIST))
-include $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/common.mk)
+include $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/helpers.mk)
 
 .PHONY: all
 all: binutils-stage1
 
 .PHONY: binutils-stage1
-binutils-stage1: ensure-dirs $(BINUTILS1_BUILD_DIR)/.built-stage1
+binutils-stage1: $(PROGRESS_DIR)/.binutils-stage1-done
 
-$(BINUTILS1_BUILD_DIR)/.built-stage1: $(BINUTILS_STAMP)
+$(PROGRESS_DIR)/.binutils-stage1-done: $(PROGRESS_DIR)/.binutils-stage1-built
+	$(Q)touch $@
+
+$(PROGRESS_DIR)/.binutils-stage1-built: $(PROGRESS_DIR)/.binutils-stage1-unpacked
 	$(Q)rm -rf $(BINUTILS1_BUILD_DIR)
 	$(Q)mkdir -p $(BINUTILS1_BUILD_DIR)
-
-	$(call do_step,EXTRACT,binutils-stage1, \
-		$(MAKE) -f $(THIS_MAKEFILE) unpack-binutils, \
-		binutils-stage1-extract)
 
 	$(call do_step,CONFIG,binutils-stage1, \
 		$(call with_host_env, cd "$(BINUTILS1_BUILD_DIR)" && "$(BINUTILS_SRC_DIR)/configure" \
@@ -70,4 +69,20 @@ $(BINUTILS1_BUILD_DIR)/.built-stage1: $(BINUTILS_STAMP)
 			"$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-ld" -v >/dev/null 2>&1', \
 		binutils-stage1-check)
 
+	$(Q)touch $@
+
+$(PROGRESS_DIR)/.binutils-stage1-unpacked: $(PROGRESS_DIR)/.binutils-stage1-verified
+	$(call do_unpack,binutils, \
+		$(call with_host_env, \
+			rm -rf "$(BINUTILS_SRC_DIR)"; \
+			"$(TAR)" -xf "$(BINUTILS_ARCHIVE)" -C "$(SOURCES_DIR)"), \
+		binutils-stage1-unpack)
+	$(Q)touch $@
+
+$(PROGRESS_DIR)/.binutils-stage1-verified: $(PROGRESS_DIR)/.binutils-stage1-downloaded
+	$(call do_verify,binutils,$(ROOT_DIR)/scripts/verify-checksums.sh binutils,binutils-stage1-verify)
+	$(Q)touch $@
+
+$(PROGRESS_DIR)/.binutils-stage1-downloaded: | ensure-dirs
+	$(call do_download,binutils,$(ROOT_DIR)/scripts/fetch-sources.sh binutils,binutils-stage1-download)
 	$(Q)touch $@

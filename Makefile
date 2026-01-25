@@ -20,7 +20,7 @@
 # SOFTWARE.
 
 include config/paths.mk
-include make/common.mk
+include make/helpers.mk
 
 ROOT_DIR := $(abspath $(ROOT_DIR))
 
