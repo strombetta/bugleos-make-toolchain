@@ -19,6 +19,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+GCC_VERSION := 15.2.0
+GCC_URL := https://ftp.gnu.org/gnu/gcc/gcc-$(GCC_VERSION)/gcc-$(GCC_VERSION).tar.xz
+GCC_SIG_URL := https://ftp.gnu.org/gnu/gcc/gcc-$(GCC_VERSION)/gcc-$(GCC_VERSION).tar.xz.sig
+GCC_SHA256 := 438fd996826b0c82485a29da03a72d71d6e3541a83ec702df4271f6fe025d24e
+
+GNU_KEYRING_URL := https://ftp.gnu.org/gnu/gnu-keyring.gpg
+GNU_KEYRING_FPRS := 1397 5A70 E63C 361C 73AE  69EF 6EEB 81F8 981C 74C7
+
 THIS_MAKEFILE := $(lastword $(MAKEFILE_LIST))
 include $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/common.mk)
 

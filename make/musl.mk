@@ -19,6 +19,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+MUSL_VERSION := 1.2.4
+MUSL_URL := https://musl.libc.org/releases/musl-$(MUSL_VERSION).tar.gz
+MUSL_SIG_URL := https://musl.libc.org/releases/musl-$(MUSL_VERSION).tar.gz.asc
+MUSL_SHA256 := 7a35eae33d5372a7c0da1188de798726f68825513b7ae3ebe97aaaa52114f039
+MUSL_PUBKEY_URL := https://musl.libc.org/musl.pub
+MUSL_PUBKEY_FPR := 8364 8929 0BB6 B70F 99FF  DA05 56BC DB59 3020 450F
+
 THIS_MAKEFILE := $(lastword $(MAKEFILE_LIST))
 include $(abspath $(dir $(THIS_MAKEFILE))/common.mk)
 

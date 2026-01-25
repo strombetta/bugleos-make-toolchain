@@ -20,7 +20,6 @@
 # SOFTWARE.
 
 include config/paths.mk
-include config/versions.mk
 include make/common.mk
 
 ROOT_DIR := $(abspath $(ROOT_DIR))
@@ -81,10 +80,10 @@ clean-binutils: clean-gcc ## Remove binutils build directories
 	$(call do_clean,binutils)
 	$(call do_safe_remove,$(BINUTILS1_BUILD_DIR))
 	$(call do_safe_remove,$(BINUTILS2_BUILD_DIR))
-	$(call do_safe_remove,$(BINUTILS_SRC_DIR))
-	$(call do_safe_remove,$(BINUTILS_STAMP))
-	$(call do_safe_remove,$(BINUTILS_ARCHIVE))
-	$(call do_safe_remove,$(DOWNLOADS_DIR)/binutils-$(BINUTILS_VERSION).tar.xz.sig)
+	$(call do_safe_remove_glob,$(SOURCES_DIR),binutils-*)
+	$(call do_safe_remove_glob,$(DOWNLOADS_DIR),.binutils-*-verified)
+	$(call do_safe_remove_glob,$(DOWNLOADS_DIR),binutils-*.tar.xz)
+	$(call do_safe_remove_glob,$(DOWNLOADS_DIR),binutils-*.tar.xz.sig)
 	$(call do_safe_remove,$(DOWNLOADS_DIR)/gnu-keyring.gpg)
 	$(call do_safe_remove_glob,$(LOGS_DIR),binutils-stage1-*.log)
 	$(call do_safe_remove_glob,$(LOGS_DIR),binutils-stage2-*.log)
@@ -118,10 +117,10 @@ clean-binutils-stage2:
 clean-gcc: clean-musl ## Remove GCC build directory
 	$(call do_clean,gcc)
 	$(call do_safe_remove,$(GCC_BUILD_DIR))
-	$(call do_safe_remove,$(GCC_SRC_DIR))
-	$(call do_safe_remove,$(GCC_STAMP))
-	$(call do_safe_remove,$(GCC_ARCHIVE))
-	$(call do_safe_remove,$(DOWNLOADS_DIR)/gcc-$(GCC_VERSION).tar.xz.sig)
+	$(call do_safe_remove_glob,$(SOURCES_DIR),gcc-*)
+	$(call do_safe_remove_glob,$(DOWNLOADS_DIR),.gcc-*-verified)
+	$(call do_safe_remove_glob,$(DOWNLOADS_DIR),gcc-*.tar.xz)
+	$(call do_safe_remove_glob,$(DOWNLOADS_DIR),gcc-*.tar.xz.sig)
 	$(call do_safe_remove,$(DOWNLOADS_DIR)/gnu-keyring.gpg)
 	$(call do_safe_remove_glob,$(LOGS_DIR),gcc-stage1-*.log)
 	$(call do_safe_remove_glob,$(LOGS_DIR),gcc-stage2-*.log)
@@ -151,10 +150,10 @@ clean-gcc-stage2:
 clean-musl: clean-binutils-stage2 clean-gcc-stage2 ## Remove musl build directory
 	$(call do_clean,musl)
 	$(call do_safe_remove,$(MUSL_BUILD_DIR))
-	$(call do_safe_remove,$(MUSL_SRC_DIR))
-	$(call do_safe_remove,$(MUSL_STAMP))
-	$(call do_safe_remove,$(MUSL_ARCHIVE))
-	$(call do_safe_remove,$(DOWNLOADS_DIR)/musl-$(MUSL_VERSION).tar.gz.asc)
+	$(call do_safe_remove_glob,$(SOURCES_DIR),musl-*)
+	$(call do_safe_remove_glob,$(DOWNLOADS_DIR),.musl-*-verified)
+	$(call do_safe_remove_glob,$(DOWNLOADS_DIR),musl-*.tar.gz)
+	$(call do_safe_remove_glob,$(DOWNLOADS_DIR),musl-*.tar.gz.asc)
 	$(call do_safe_remove,$(DOWNLOADS_DIR)/musl.pub)
 	$(call do_safe_remove_glob,$(LOGS_DIR),musl-*.log)
 	$(foreach lib,$(MUSL_LIBS),$(call do_safe_remove_glob,$(SYSROOT)/lib,$(lib).*))
@@ -187,10 +186,10 @@ clean-musl: clean-binutils-stage2 clean-gcc-stage2 ## Remove musl build director
 clean-kheaders: clean-gcc ## Remove Linux UAPI headers build directory
 	$(call do_clean,linux-headers)
 	$(call do_safe_remove,$(LINUX_HEADERS_BUILD_DIR))
-	$(call do_safe_remove,$(LINUX_SRC_DIR))
-	$(call do_safe_remove,$(LINUX_STAMP))
-	$(call do_safe_remove,$(LINUX_ARCHIVE))
-	$(call do_safe_remove,$(DOWNLOADS_DIR)/linux-$(LINUX_VERSION).tar.sign)
+	$(call do_safe_remove_glob,$(SOURCES_DIR),linux-*)
+	$(call do_safe_remove_glob,$(DOWNLOADS_DIR),.linux-*-verified)
+	$(call do_safe_remove_glob,$(DOWNLOADS_DIR),linux-*.tar.xz)
+	$(call do_safe_remove_glob,$(DOWNLOADS_DIR),linux-*.tar.sign)
 	$(call do_safe_remove_glob,$(LOGS_DIR),linux-headers-*.log)
 	$(call do_safe_remove,$(SYSROOT)/usr/include/linux)
 	$(call do_safe_remove,$(SYSROOT)/usr/include/asm)

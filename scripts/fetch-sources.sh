@@ -25,14 +25,10 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 DOWNLOADS_DIR="${DOWNLOADS_DIR:-$ROOT_DIR/downloads}"
 
-version_of() {
-  local var="$1"
-  awk -F':=' -v name="$var" '$1 ~ "^"name"" {gsub(/[ \t]/,"",$2); print $2}' "$ROOT_DIR/config/versions.mk"
-}
-
-url_of() {
-  local var="$1"
-  awk -F':=' -v name="$var" '$1 ~ "^"name"" {sub(/^ /,"",$2); print $2}' "$ROOT_DIR/config/versions.mk"
+value_of() {
+  local mk_file="$1"
+  local var="$2"
+  awk -F':=' -v name="$var" '$1 ~ "^"name"" {sub(/^[ \t]+/,"",$2); print $2; exit}' "$mk_file"
 }
 
 expand_make_vars() {
@@ -66,26 +62,32 @@ fetch() {
   fi
 }
 
-BINUTILS_VERSION=$(version_of BINUTILS_VERSION)
-LINUX_VERSION=$(version_of LINUX_VERSION)
-GCC_VERSION=$(version_of GCC_VERSION)
-MUSL_VERSION=$(version_of MUSL_VERSION)
+BINUTILS_MK="$ROOT_DIR/make/binutils-stage1.mk"
+LINUX_MK="$ROOT_DIR/make/linux-headers.mk"
+GCC_MK="$ROOT_DIR/make/gcc-stage1.mk"
+MUSL_MK="$ROOT_DIR/make/musl.mk"
 
-BINUTILS_URL=$(url_of BINUTILS_URL)
-BINUTILS_SIG_URL=$(url_of BINUTILS_SIG_URL)
-LINUX_URL=$(url_of LINUX_URL)
-LINUX_SIG_URL=$(url_of LINUX_SIG_URL)
-GCC_URL=$(url_of GCC_URL)
-GCC_SIG_URL=$(url_of GCC_SIG_URL)
-GNU_KEYRING_URL=$(url_of GNU_KEYRING_URL)
-MUSL_URL=$(url_of MUSL_URL)
-MUSL_SIG_URL=$(url_of MUSL_SIG_URL)
-MUSL_PUBKEY_URL=$(url_of MUSL_PUBKEY_URL)
+BINUTILS_VERSION=$(value_of "$BINUTILS_MK" BINUTILS_VERSION)
+LINUX_VERSION=$(value_of "$LINUX_MK" LINUX_VERSION)
+GCC_VERSION=$(value_of "$GCC_MK" GCC_VERSION)
+MUSL_VERSION=$(value_of "$MUSL_MK" MUSL_VERSION)
+
+BINUTILS_URL=$(value_of "$BINUTILS_MK" BINUTILS_URL)
+BINUTILS_SIG_URL=$(value_of "$BINUTILS_MK" BINUTILS_SIG_URL)
+LINUX_URL=$(value_of "$LINUX_MK" LINUX_URL)
+LINUX_SIG_URL=$(value_of "$LINUX_MK" LINUX_SIG_URL)
+GCC_URL=$(value_of "$GCC_MK" GCC_URL)
+GCC_SIG_URL=$(value_of "$GCC_MK" GCC_SIG_URL)
+MUSL_URL=$(value_of "$MUSL_MK" MUSL_URL)
+MUSL_SIG_URL=$(value_of "$MUSL_MK" MUSL_SIG_URL)
+MUSL_PUBKEY_URL=$(value_of "$MUSL_MK" MUSL_PUBKEY_URL)
 
 fetch_binutils() {
+  local gnu_keyring_url
+  gnu_keyring_url=$(value_of "$BINUTILS_MK" GNU_KEYRING_URL)
   fetch "binutils-${BINUTILS_VERSION}.tar.xz" "$(expand_url "$BINUTILS_URL")"
   fetch "binutils-${BINUTILS_VERSION}.tar.xz.sig" "$(expand_url "$BINUTILS_SIG_URL")"
-  fetch "gnu-keyring.gpg" "$(expand_url "$GNU_KEYRING_URL")"
+  fetch "gnu-keyring.gpg" "$(expand_url "$gnu_keyring_url")"
 }
 
 fetch_linux() {
@@ -94,9 +96,11 @@ fetch_linux() {
 }
 
 fetch_gcc() {
+  local gnu_keyring_url
+  gnu_keyring_url=$(value_of "$GCC_MK" GNU_KEYRING_URL)
   fetch "gcc-${GCC_VERSION}.tar.xz" "$(expand_url "$GCC_URL")"
   fetch "gcc-${GCC_VERSION}.tar.xz.sig" "$(expand_url "$GCC_SIG_URL")"
-  fetch "gnu-keyring.gpg" "$(expand_url "$GNU_KEYRING_URL")"
+  fetch "gnu-keyring.gpg" "$(expand_url "$gnu_keyring_url")"
 }
 
 fetch_musl() {

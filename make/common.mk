@@ -21,7 +21,6 @@
 
 ROOT_DIR ?= $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/..)
 include $(ROOT_DIR)/config/paths.mk
-include $(ROOT_DIR)/config/versions.mk
 
 # define comma
 COMMA := ","
