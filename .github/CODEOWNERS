@@ -1,0 +1,13 @@
+# Default owners
+* @strombetta
+
+# CI / release workflows
+/.github/workflows/ @strombetta
+
+# Build system and scripts
+/Makefile @strombetta
+/Makefile.check @strombetta
+/Makefile.help @strombetta
+/make/ @strombetta
+/scripts/ @strombetta
+/config/ @strombetta
