@@ -19,22 +19,29 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+BINUTILS_VERSION := 2.45.1
+BINUTILS_URL := https://ftp.gnu.org/gnu/binutils/binutils-$(BINUTILS_VERSION).tar.xz
+BINUTILS_SIG_URL := https://ftp.gnu.org/gnu/binutils/binutils-$(BINUTILS_VERSION).tar.xz.sig
+BINUTILS_SHA256 := 5fe101e6fe9d18fdec95962d81ed670fdee5f37e3f48f0bef87bddf862513aa5
+
+GNU_KEYRING_URL := https://ftp.gnu.org/gnu/gnu-keyring.gpg
+GNU_KEYRING_FPRS := 1397 5A70 E63C 361C 73AE  69EF 6EEB 81F8 981C 74C7
+
 THIS_MAKEFILE := $(lastword $(MAKEFILE_LIST))
-include $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/common.mk)
+include $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/helpers.mk)
 
 .PHONY: all
 all: binutils-stage2
 
 .PHONY: binutils-stage2
-binutils-stage2: ensure-dirs $(BINUTILS2_BUILD_DIR)/.built-stage2
+binutils-stage2: $(PROGRESS_DIR)/.binutils-stage2-done
 
-$(BINUTILS2_BUILD_DIR)/.built-stage2: $(BINUTILS_STAMP)
+$(PROGRESS_DIR)/.binutils-stage2-done: $(PROGRESS_DIR)/.binutils-stage2-built
+	$(Q)touch $@
+
+$(PROGRESS_DIR)/.binutils-stage2-built: $(PROGRESS_DIR)/.binutils-stage2-unpacked
 	$(Q)rm -rf "$(BINUTILS2_BUILD_DIR)"
 	$(Q)mkdir -p "$(BINUTILS2_BUILD_DIR)"
-
-	$(call do_step,EXTRACT,binutils-stage2, \
-		$(MAKE) -f $(THIS_MAKEFILE) unpack-binutils, \
-		binutils-stage2-extract)
 
 	$(call do_step,CONFIG,binutils-stage2, \
 		$(call with_cross_env, \
@@ -73,4 +80,20 @@ $(BINUTILS2_BUILD_DIR)/.built-stage2: $(BINUTILS_STAMP)
 		), \
 		binutils-stage2-check)
 
+	$(Q)touch $@
+
+$(PROGRESS_DIR)/.binutils-stage2-unpacked: $(PROGRESS_DIR)/.binutils-stage2-verified
+	$(call do_unpack,binutils, \
+		$(call with_host_env, \
+			rm -rf "$(BINUTILS_SRC_DIR)"; \
+			"$(TAR)" -xf "$(BINUTILS_ARCHIVE)" -C "$(SOURCES_DIR)"), \
+		binutils-stage2-unpack)
+	$(Q)touch $@
+
+$(PROGRESS_DIR)/.binutils-stage2-verified: $(PROGRESS_DIR)/.binutils-stage2-downloaded
+	$(call do_verify,binutils,$(ROOT_DIR)/scripts/verify-checksums.sh binutils,binutils-stage2-verify)
+	$(Q)touch $@
+
+$(PROGRESS_DIR)/.binutils-stage2-downloaded: | ensure-dirs
+	$(call do_download,binutils,$(ROOT_DIR)/scripts/fetch-sources.sh binutils,binutils-stage2-download)
 	$(Q)touch $@
