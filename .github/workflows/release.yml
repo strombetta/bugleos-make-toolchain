@@ -118,6 +118,31 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y minisign gnupg
 
+      - name: Install SBOM tool (syft)
+        run: |
+          set -euo pipefail
+          syft_version="v1.12.1"
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin "$syft_version"
+          syft version
+
+      - name: Generate SBOMs (SPDX + CycloneDX)
+        run: |
+          set -euo pipefail
+          mapfile -d '' files < <(find dist -name 'bugleos-toolchain-*.tar.gz' -print0 | sort -z)
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No toolchain tarballs found under dist/." >&2
+            exit 1
+          fi
+
+          for f in "${files[@]}"; do
+            base="$(basename "$f" .tar.gz)"
+            workdir="$(mktemp -d)"
+            tar -C "$workdir" -xzf "$f"
+            syft "dir:$workdir" -o spdx-json > "dist/${base}.spdx.json"
+            syft "dir:$workdir" -o cyclonedx-json > "dist/${base}.cdx.json"
+            rm -rf "$workdir"
+          done
+
       - name: Generate SHA256SUMS and signatures
         env:
           MINISIGN_KEY: ${{ secrets.MINISIGN_KEY }}
@@ -158,7 +183,13 @@ jobs:
             exit 1
           fi
 
-          sha256sum "${files[@]}" > dist/SHA256SUMS
+          mapfile -d '' sboms < <(find dist -maxdepth 1 \( -name 'bugleos-toolchain-*.spdx.json' -o -name 'bugleos-toolchain-*.cdx.json' \) -print0 | sort -z)
+          if [ "${#sboms[@]}" -eq 0 ]; then
+            echo "No SBOM files found under dist/." >&2
+            exit 1
+          fi
+
+          sha256sum "${files[@]}" "${sboms[@]}" > dist/SHA256SUMS
 
           minisign -S -s out/minisign.key -p out/minisign.pub -m dist/SHA256SUMS
           if [ -n "${GPG_PASSPHRASE:-}" ]; then
@@ -186,11 +217,16 @@ jobs:
           draft: false
           prerelease: ${{ env.PRERELEASE }}
           body: |
-            Supported architectures:
-            Architecture | Download Link
-            ------------ | -------------
-            x86_64      | [bugleos-toolchain-${{ env.VERSION }}-x86_64.tar.gz](dist/**/bugleos-toolchain-${{ env.VERSION }}-x86_64.tar.gz)
-            aarch64     | [bugleos-toolchain-${{ env.VERSION }}-aarch64.tar.gz](dist/**/bugleos-toolchain-${{ env.VERSION }}-aarch64.tar.gz)
+            # Supported architectures:
+            
+            ## 64-bit architecture (x86_64)
+            [Download bugleos-toolchain-${{ env.VERSION }}-x86_64 toolchain](dist/**/bugleos-toolchain-${{ env.VERSION }}-x86_64.tar.gz)
+            [Download bugleos-toolchain-${{ env.VERSION }}-x86_64 minisign](dist/**/bugleos-toolchain-${{ env.VERSION }}-x86_64.tar.gz.minisig)
+
+            ## ARM 64-bit architecture (aarch64)
+            [Download bugleos-toolchain-${{ env.VERSION }}-aarch64 toolchain](dist/**/bugleos-toolchain-${{ env.VERSION }}-aarch64.tar.gz)
+            [Download bugleos-toolchain-${{ env.VERSION }}-aarch64 minisign](dist/**/bugleos-toolchain-${{ env.VERSION }}-aarch64.tar.gz.minisig)
+            
           files: |
             dist/**/bugleos-toolchain-${{ env.VERSION }}-x86_64.tar.gz
             dist/**/bugleos-toolchain-${{ env.VERSION }}-aarch64.tar.gz
@@ -198,6 +234,10 @@ jobs:
             dist/**/bugleos-toolchain-${{ env.VERSION }}-aarch64.tar.gz.minisig
             dist/**/bugleos-toolchain-${{ env.VERSION }}-x86_64.tar.gz.asc
             dist/**/bugleos-toolchain-${{ env.VERSION }}-aarch64.tar.gz.asc
+            dist/bugleos-toolchain-${{ env.VERSION }}-x86_64.spdx.json
+            dist/bugleos-toolchain-${{ env.VERSION }}-aarch64.spdx.json
+            dist/bugleos-toolchain-${{ env.VERSION }}-x86_64.cdx.json
+            dist/bugleos-toolchain-${{ env.VERSION }}-aarch64.cdx.json
             dist/SHA256SUMS
             dist/SHA256SUMS.minisig
             dist/SHA256SUMS.asc
