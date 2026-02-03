@@ -179,6 +179,7 @@ jobs:
         env:
           MINISIGN_KEY: ${{ secrets.MINISIGN_KEY }}
           MINISIGN_PUB: ${{ secrets.MINISIGN_PUB }}
+          MINISIGN_PASSWORD: ${{ secrets.MINISIGN_PASSWORD }}
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: |
@@ -223,7 +224,12 @@ jobs:
 
           sha256sum "${files[@]}" "${sboms[@]}" > dist/SHA256SUMS
 
-          minisign -S -s out/minisign.key -p out/minisign.pub -m dist/SHA256SUMS
+          minisign_args=(-S -s out/minisign.key -p out/minisign.pub)
+          if [ -n "${MINISIGN_PASSWORD:-}" ]; then
+            minisign_args+=(-P "$MINISIGN_PASSWORD")
+          fi
+
+          minisign "${minisign_args[@]}" -m dist/SHA256SUMS
           if [ -n "${GPG_PASSPHRASE:-}" ]; then
             gpg --batch --yes --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" \
               --local-user "$key_id" --armor --detach-sign -o dist/SHA256SUMS.asc dist/SHA256SUMS
@@ -232,7 +238,7 @@ jobs:
           fi
 
           for f in "${files[@]}"; do
-            minisign -S -s out/minisign.key -p out/minisign.pub -m "$f"
+            minisign "${minisign_args[@]}" -m "$f"
             if [ -n "${GPG_PASSPHRASE:-}" ]; then
               gpg --batch --yes --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" \
                 --local-user "$key_id" --armor --detach-sign -o "$f.asc" "$f"
