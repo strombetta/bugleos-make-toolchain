@@ -154,8 +154,7 @@ jobs:
       - name: Install SBOM tool (syft)
         run: |
           set -euo pipefail
-          syft_version="v1.12.1"
-          curl -sSfL https://get.anchore.io/syft | sh -s -- -b /usr/local/bin "$syft_version"
+          curl -sSfL https://get.anchore.io/syft | sh -s -- -b /usr/local/bin
           syft version
 
       - name: Generate SBOMs (SPDX + CycloneDX)
