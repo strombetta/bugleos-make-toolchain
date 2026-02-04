@@ -29,6 +29,26 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Read package versions
+        shell: bash
+        run: |
+          set -euo pipefail
+          binutils_version="$(awk -F ' := ' '/^BINUTILS_VERSION/ {print $2; exit}' make/binutils-stage1.mk)"
+          gcc_version="$(awk -F ' := ' '/^GCC_VERSION/ {print $2; exit}' make/gcc-stage1.mk)"
+          musl_version="$(awk -F ' := ' '/^MUSL_VERSION/ {print $2; exit}' make/musl.mk)"
+          linux_version="$(awk -F ' := ' '/^LINUX_VERSION/ {print $2; exit}' make/linux-headers.mk)"
+
+          if [ -z "$binutils_version" ] || [ -z "$gcc_version" ] || [ -z "$musl_version" ] || [ -z "$linux_version" ]; then
+            echo "Failed to read one or more package versions." >&2
+            exit 1
+          fi
+
+          echo "BINUTILS_VERSION=${binutils_version}" >> "$GITHUB_ENV"
+          echo "GCC_VERSION=${gcc_version}" >> "$GITHUB_ENV"
+          echo "MUSL_VERSION=${musl_version}" >> "$GITHUB_ENV"
+          echo "LINUX_VERSION=${linux_version}" >> "$GITHUB_ENV"
+          echo "VERSIONS_KEY=binutils-${binutils_version}-gcc-${gcc_version}-musl-${musl_version}-linux-${linux_version}" >> "$GITHUB_ENV"
+
       - name: Validate tag format
         run: |
           set -euo pipefail
@@ -47,6 +67,24 @@ jobs:
             build-essential binutils bash coreutils tar gzip xz-utils bison flex texinfo gawk file curl wget gpg \
             libgmp-dev libmpfr-dev libmpc-dev python3
 
+      - name: Restore download cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            downloads/
+            sources/
+          key: downloads-${{ runner.os }}-${{ matrix.arch }}-${{ env.VERSIONS_KEY }}
+
+      - name: Restore build cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            builds/
+            out/progress/
+            out/toolchain/
+            out/toolchain-stage1/
+          key: build-${{ runner.os }}-${{ matrix.arch }}-${{ env.VERSIONS_KEY }}-${{ hashFiles('Makefile', 'make/*.mk', 'config/*.mk', 'scripts/*.sh') }}
+
       - name: Fetch sources
         run: |
           set -euo pipefail
@@ -57,10 +95,35 @@ jobs:
           set -euo pipefail
           ./scripts/verify-checksums.sh
 
-      - name: Build ${{ matrix.arch }} toolchain
+      - name: Build binutils stage1
         run: |
           set -euo pipefail
-          make TARGET=${{ matrix.triple }} toolchain
+          make TARGET=${{ matrix.triple }} binutils-stage1
+
+      - name: Build Linux headers
+        run: |
+          set -euo pipefail
+          make TARGET=${{ matrix.triple }} linux-headers
+
+      - name: Build GCC stage1
+        run: |
+          set -euo pipefail
+          make TARGET=${{ matrix.triple }} gcc-stage1
+
+      - name: Build musl
+        run: |
+          set -euo pipefail
+          make TARGET=${{ matrix.triple }} musl
+
+      - name: Build binutils stage2
+        run: |
+          set -euo pipefail
+          make TARGET=${{ matrix.triple }} binutils-stage2
+
+      - name: Build GCC stage2
+        run: |
+          set -euo pipefail
+          make TARGET=${{ matrix.triple }} gcc-stage2
         
       - name: Upload build logs
         if: always()
