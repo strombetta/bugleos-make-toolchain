@@ -209,6 +209,13 @@ jobs:
             echo "No GPG secret key imported." >&2
             exit 1
           fi
+          if [ -z "${GPG_PASSPHRASE:-}" ]; then
+            if ! gpg --batch --yes --local-user "$key_id" --armor --detach-sign -o /tmp/gpg-passcheck.asc /dev/null >/dev/null 2>&1; then
+              echo "GPG_PASSPHRASE is required for the provided GPG key." >&2
+              exit 1
+            fi
+            rm -f /tmp/gpg-passcheck.asc
+          fi
 
           mapfile -d '' files < <(find dist -name 'bugleos-toolchain-*.tar.gz' -print0 | sort -z)
           if [ "${#files[@]}" -eq 0 ]; then
@@ -224,9 +231,18 @@ jobs:
 
           sha256sum "${files[@]}" "${sboms[@]}" > dist/SHA256SUMS
 
-          minisign_args=(-S -s out/minisign.key -p out/minisign.pub)
+          minisign_args=(-S -s out/minisign.key)
           if [ -n "${MINISIGN_PASSWORD:-}" ]; then
             minisign_args+=(-P "$MINISIGN_PASSWORD")
+          fi
+          if [ -z "${MINISIGN_PASSWORD:-}" ]; then
+            tmp_minisign="$(mktemp)"
+            printf 'minisign-check' > "$tmp_minisign"
+            if ! minisign -S -s out/minisign.key -m "$tmp_minisign" >/dev/null 2>&1; then
+              echo "MINISIGN_PASSWORD is required for the provided minisign key." >&2
+              exit 1
+            fi
+            rm -f "$tmp_minisign" "$tmp_minisign.minisig"
           fi
 
           minisign "${minisign_args[@]}" -m dist/SHA256SUMS
