@@ -259,14 +259,8 @@ jobs:
           fi
 
           mkdir -p out dist
-          if ! printf '%s' "$MINISIGN_KEY" | base64 -d > out/minisign.key 2>/dev/null; then
-            echo "Failed to decode MINISIGN_KEY (expected base64). Re-encode minisign.key and update the secret." >&2
-            exit 1
-          fi
-          if ! printf '%s' "$MINISIGN_PUB" | base64 -d > out/minisign.pub 2>/dev/null; then
-            echo "Failed to decode MINISIGN_PUB (expected base64). Re-encode minisign.pub and update the secret." >&2
-            exit 1
-          fi
+          printf '%s' "$MINISIGN_KEY" | base64 -d > out/minisign.key
+          printf '%s' "$MINISIGN_PUB" | base64 -d > out/minisign.pub
           chmod 600 out/minisign.key
           cp out/minisign.pub dist/minisign.pub
 
@@ -294,58 +288,16 @@ jobs:
 
           sha256sum "${files[@]}" "${sboms[@]}" > dist/SHA256SUMS
 
-          minisign_args=(-S -s out/minisign.key)
-          if [ -n "${MINISIGN_PASSWORD:-}" ]; then
-            minisign_args+=(-P "$MINISIGN_PASSWORD")
-          fi
-          tmp_minisign="$(mktemp)"
-          tmp_minisign_err="$(mktemp)"
-          printf 'minisign-check' > "$tmp_minisign"
-          if ! minisign "${minisign_args[@]}" -m "$tmp_minisign" >/dev/null 2>"$tmp_minisign_err"; then
-            if [ -n "${MINISIGN_PASSWORD:-}" ]; then
-              if minisign -S -s out/minisign.key -m "$tmp_minisign" >/dev/null 2>&1; then
-                echo "Minisign test signing succeeded without MINISIGN_PASSWORD. Remove it or update the key/password." >&2
-                rm -f "$tmp_minisign" "$tmp_minisign.minisig" "$tmp_minisign_err"
-                exit 1
-              fi
-            fi
-            echo "Minisign test signing failed. minisign stderr:" >&2
-            sed 's/^/  /' "$tmp_minisign_err" >&2 || true
-            rm -f "$tmp_minisign" "$tmp_minisign.minisig" "$tmp_minisign_err"
-            exit 1
-          fi
-          rm -f "$tmp_minisign" "$tmp_minisign.minisig" "$tmp_minisign_err"
-
-          if [ -n "${GPG_PASSPHRASE:-}" ]; then
-            if ! gpg --batch --yes --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" \
-              --local-user "$key_id" --armor --detach-sign -o /tmp/gpg-passcheck.asc /dev/null >/dev/null 2>&1; then
-              echo "GPG test signing failed. Check GPG_PASSPHRASE and key material." >&2
-              exit 1
-            fi
-          else
-            if ! gpg --batch --yes --local-user "$key_id" --armor --detach-sign -o /tmp/gpg-passcheck.asc /dev/null >/dev/null 2>&1; then
-              echo "GPG test signing failed. The key may be passphrase-protected; set GPG_PASSPHRASE." >&2
-              exit 1
-            fi
-          fi
-          rm -f /tmp/gpg-passcheck.asc
+          minisign_args=(-S -s out/minisign.key -P "$MINISIGN_PASSWORD")
 
           minisign "${minisign_args[@]}" -m dist/SHA256SUMS
-          if [ -n "${GPG_PASSPHRASE:-}" ]; then
-            gpg --batch --yes --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" \
-              --local-user "$key_id" --armor --detach-sign -o dist/SHA256SUMS.asc dist/SHA256SUMS
-          else
-            gpg --batch --yes --local-user "$key_id" --armor --detach-sign -o dist/SHA256SUMS.asc dist/SHA256SUMS
-          fi
+          gpg --batch --yes --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" \
+            --local-user "$key_id" --armor --detach-sign -o dist/SHA256SUMS.asc dist/SHA256SUMS
 
           for f in "${files[@]}"; do
             minisign "${minisign_args[@]}" -m "$f"
-            if [ -n "${GPG_PASSPHRASE:-}" ]; then
-              gpg --batch --yes --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" \
-                --local-user "$key_id" --armor --detach-sign -o "$f.asc" "$f"
-            else
-              gpg --batch --yes --local-user "$key_id" --armor --detach-sign -o "$f.asc" "$f"
-            fi
+            gpg --batch --yes --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" \
+              --local-user "$key_id" --armor --detach-sign -o "$f.asc" "$f"
           done
 
       - name: Publish GitHub Release
