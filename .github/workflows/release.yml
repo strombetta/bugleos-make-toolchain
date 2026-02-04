@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
 
 jobs:
   build:
@@ -269,12 +270,14 @@ jobs:
           chmod 600 out/minisign.key
           cp out/minisign.pub dist/minisign.pub
 
-          if ! grep -qi "minisign secret key" out/minisign.key; then
-            echo "MINISIGN_KEY does not look like a minisign secret key. Check that secrets are not swapped." >&2
+          key_first_line="$(head -n 1 out/minisign.key | tr -d '\r')"
+          pub_first_line="$(head -n 1 out/minisign.pub | tr -d '\r')"
+          if ! printf '%s\n' "$key_first_line" | grep -qi "minisign secret key"; then
+            echo "MINISIGN_KEY does not look like a minisign secret key. First line: '$key_first_line'." >&2
             exit 1
           fi
-          if ! grep -qi "minisign public key" out/minisign.pub; then
-            echo "MINISIGN_PUB does not look like a minisign public key. Check that secrets are not swapped." >&2
+          if ! printf '%s\n' "$pub_first_line" | grep -qi "minisign public key"; then
+            echo "MINISIGN_PUB does not look like a minisign public key. First line: '$pub_first_line'." >&2
             exit 1
           fi
 
