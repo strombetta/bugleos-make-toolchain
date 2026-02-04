@@ -260,26 +260,15 @@ jobs:
 
           mkdir -p out dist
           if ! printf '%s' "$MINISIGN_KEY" | base64 -d > out/minisign.key 2>/dev/null; then
-            echo "MINISIGN_KEY is not valid base64. Re-encode minisign.key and update the secret." >&2
+            echo "Failed to decode MINISIGN_KEY (expected base64). Re-encode minisign.key and update the secret." >&2
             exit 1
           fi
           if ! printf '%s' "$MINISIGN_PUB" | base64 -d > out/minisign.pub 2>/dev/null; then
-            echo "MINISIGN_PUB is not valid base64. Re-encode minisign.pub and update the secret." >&2
+            echo "Failed to decode MINISIGN_PUB (expected base64). Re-encode minisign.pub and update the secret." >&2
             exit 1
           fi
           chmod 600 out/minisign.key
           cp out/minisign.pub dist/minisign.pub
-
-          key_first_line="$(head -n 1 out/minisign.key | tr -d '\r')"
-          pub_first_line="$(head -n 1 out/minisign.pub | tr -d '\r')"
-          if ! printf '%s\n' "$key_first_line" | grep -qi "minisign secret key"; then
-            echo "MINISIGN_KEY does not look like a minisign secret key. First line: '$key_first_line'." >&2
-            exit 1
-          fi
-          if ! printf '%s\n' "$pub_first_line" | grep -qi "minisign public key"; then
-            echo "MINISIGN_PUB does not look like a minisign public key. First line: '$pub_first_line'." >&2
-            exit 1
-          fi
 
           export GNUPGHOME
           GNUPGHOME="$(mktemp -d)"
@@ -289,13 +278,6 @@ jobs:
           if [ -z "$key_id" ]; then
             echo "No GPG secret key imported." >&2
             exit 1
-          fi
-          if [ -z "${GPG_PASSPHRASE:-}" ]; then
-            if ! gpg --batch --yes --local-user "$key_id" --armor --detach-sign -o /tmp/gpg-passcheck.asc /dev/null >/dev/null 2>&1; then
-              echo "GPG_PASSPHRASE is required for the provided GPG key." >&2
-              exit 1
-            fi
-            rm -f /tmp/gpg-passcheck.asc
           fi
 
           mapfile -d '' files < <(find dist -name 'bugleos-toolchain-*.tar.gz' -print0 | sort -z)
@@ -316,15 +298,27 @@ jobs:
           if [ -n "${MINISIGN_PASSWORD:-}" ]; then
             minisign_args+=(-P "$MINISIGN_PASSWORD")
           fi
-          if [ -z "${MINISIGN_PASSWORD:-}" ]; then
-            tmp_minisign="$(mktemp)"
-            printf 'minisign-check' > "$tmp_minisign"
-            if ! minisign -S -s out/minisign.key -m "$tmp_minisign" >/dev/null 2>&1; then
-              echo "MINISIGN_PASSWORD is required for the provided minisign key." >&2
+          tmp_minisign="$(mktemp)"
+          printf 'minisign-check' > "$tmp_minisign"
+          if ! minisign "${minisign_args[@]}" -m "$tmp_minisign" >/dev/null 2>&1; then
+            echo "Minisign test signing failed. Check MINISIGN_PASSWORD and key material." >&2
+            exit 1
+          fi
+          rm -f "$tmp_minisign" "$tmp_minisign.minisig"
+
+          if [ -n "${GPG_PASSPHRASE:-}" ]; then
+            if ! gpg --batch --yes --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" \
+              --local-user "$key_id" --armor --detach-sign -o /tmp/gpg-passcheck.asc /dev/null >/dev/null 2>&1; then
+              echo "GPG test signing failed. Check GPG_PASSPHRASE and key material." >&2
               exit 1
             fi
-            rm -f "$tmp_minisign" "$tmp_minisign.minisig"
+          else
+            if ! gpg --batch --yes --local-user "$key_id" --armor --detach-sign -o /tmp/gpg-passcheck.asc /dev/null >/dev/null 2>&1; then
+              echo "GPG test signing failed. The key may be passphrase-protected; set GPG_PASSPHRASE." >&2
+              exit 1
+            fi
           fi
+          rm -f /tmp/gpg-passcheck.asc
 
           minisign "${minisign_args[@]}" -m dist/SHA256SUMS
           if [ -n "${GPG_PASSPHRASE:-}" ]; then
