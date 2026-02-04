@@ -195,10 +195,25 @@ jobs:
           fi
 
           mkdir -p out dist
-          printf '%s' "$MINISIGN_KEY" | base64 -d > out/minisign.key
-          printf '%s' "$MINISIGN_PUB" | base64 -d > out/minisign.pub
+          if ! printf '%s' "$MINISIGN_KEY" | base64 -d > out/minisign.key 2>/dev/null; then
+            echo "MINISIGN_KEY is not valid base64. Re-encode minisign.key and update the secret." >&2
+            exit 1
+          fi
+          if ! printf '%s' "$MINISIGN_PUB" | base64 -d > out/minisign.pub 2>/dev/null; then
+            echo "MINISIGN_PUB is not valid base64. Re-encode minisign.pub and update the secret." >&2
+            exit 1
+          fi
           chmod 600 out/minisign.key
           cp out/minisign.pub dist/minisign.pub
+
+          if ! grep -qi "minisign secret key" out/minisign.key; then
+            echo "MINISIGN_KEY does not look like a minisign secret key. Check that secrets are not swapped." >&2
+            exit 1
+          fi
+          if ! grep -qi "minisign public key" out/minisign.pub; then
+            echo "MINISIGN_PUB does not look like a minisign public key. Check that secrets are not swapped." >&2
+            exit 1
+          fi
 
           export GNUPGHOME
           GNUPGHOME="$(mktemp -d)"
