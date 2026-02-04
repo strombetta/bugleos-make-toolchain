@@ -299,12 +299,22 @@ jobs:
             minisign_args+=(-P "$MINISIGN_PASSWORD")
           fi
           tmp_minisign="$(mktemp)"
+          tmp_minisign_err="$(mktemp)"
           printf 'minisign-check' > "$tmp_minisign"
-          if ! minisign "${minisign_args[@]}" -m "$tmp_minisign" >/dev/null 2>&1; then
-            echo "Minisign test signing failed. Check MINISIGN_PASSWORD and key material." >&2
+          if ! minisign "${minisign_args[@]}" -m "$tmp_minisign" >/dev/null 2>"$tmp_minisign_err"; then
+            if [ -n "${MINISIGN_PASSWORD:-}" ]; then
+              if minisign -S -s out/minisign.key -m "$tmp_minisign" >/dev/null 2>&1; then
+                echo "Minisign test signing succeeded without MINISIGN_PASSWORD. Remove it or update the key/password." >&2
+                rm -f "$tmp_minisign" "$tmp_minisign.minisig" "$tmp_minisign_err"
+                exit 1
+              fi
+            fi
+            echo "Minisign test signing failed. minisign stderr:" >&2
+            sed 's/^/  /' "$tmp_minisign_err" >&2 || true
+            rm -f "$tmp_minisign" "$tmp_minisign.minisig" "$tmp_minisign_err"
             exit 1
           fi
-          rm -f "$tmp_minisign" "$tmp_minisign.minisig"
+          rm -f "$tmp_minisign" "$tmp_minisign.minisig" "$tmp_minisign_err"
 
           if [ -n "${GPG_PASSPHRASE:-}" ]; then
             if ! gpg --batch --yes --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" \
