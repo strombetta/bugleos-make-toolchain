@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
 
 jobs:
   build:
@@ -29,6 +30,26 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Read package versions
+        shell: bash
+        run: |
+          set -euo pipefail
+          binutils_version="$(awk -F ' := ' '/^BINUTILS_VERSION/ {print $2; exit}' make/binutils-stage1.mk)"
+          gcc_version="$(awk -F ' := ' '/^GCC_VERSION/ {print $2; exit}' make/gcc-stage1.mk)"
+          musl_version="$(awk -F ' := ' '/^MUSL_VERSION/ {print $2; exit}' make/musl.mk)"
+          linux_version="$(awk -F ' := ' '/^LINUX_VERSION/ {print $2; exit}' make/linux-headers.mk)"
+
+          if [ -z "$binutils_version" ] || [ -z "$gcc_version" ] || [ -z "$musl_version" ] || [ -z "$linux_version" ]; then
+            echo "Failed to read one or more package versions." >&2
+            exit 1
+          fi
+
+          echo "BINUTILS_VERSION=${binutils_version}" >> "$GITHUB_ENV"
+          echo "GCC_VERSION=${gcc_version}" >> "$GITHUB_ENV"
+          echo "MUSL_VERSION=${musl_version}" >> "$GITHUB_ENV"
+          echo "LINUX_VERSION=${linux_version}" >> "$GITHUB_ENV"
+          echo "VERSIONS_KEY=binutils-${binutils_version}-gcc-${gcc_version}-musl-${musl_version}-linux-${linux_version}" >> "$GITHUB_ENV"
+
       - name: Validate tag format
         run: |
           set -euo pipefail
@@ -47,6 +68,24 @@ jobs:
             build-essential binutils bash coreutils tar gzip xz-utils bison flex texinfo gawk file curl wget gpg \
             libgmp-dev libmpfr-dev libmpc-dev python3
 
+      - name: Restore download cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            downloads/
+            sources/
+          key: downloads-${{ runner.os }}-${{ matrix.arch }}-${{ env.VERSIONS_KEY }}
+
+      - name: Restore build cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            builds/
+            out/progress/
+            out/toolchain/
+            out/toolchain-stage1/
+          key: build-${{ runner.os }}-${{ matrix.arch }}-${{ env.VERSIONS_KEY }}-${{ hashFiles('Makefile', 'make/*.mk', 'config/*.mk', 'scripts/*.sh') }}
+
       - name: Fetch sources
         run: |
           set -euo pipefail
@@ -57,10 +96,35 @@ jobs:
           set -euo pipefail
           ./scripts/verify-checksums.sh
 
-      - name: Build ${{ matrix.arch }} toolchain
+      - name: Build binutils stage1
         run: |
           set -euo pipefail
-          make TARGET=${{ matrix.triple }} toolchain
+          make TARGET=${{ matrix.triple }} binutils-stage1
+
+      - name: Build Linux headers
+        run: |
+          set -euo pipefail
+          make TARGET=${{ matrix.triple }} linux-headers
+
+      - name: Build GCC stage1
+        run: |
+          set -euo pipefail
+          make TARGET=${{ matrix.triple }} gcc-stage1
+
+      - name: Build musl
+        run: |
+          set -euo pipefail
+          make TARGET=${{ matrix.triple }} musl
+
+      - name: Build binutils stage2
+        run: |
+          set -euo pipefail
+          make TARGET=${{ matrix.triple }} binutils-stage2
+
+      - name: Build GCC stage2
+        run: |
+          set -euo pipefail
+          make TARGET=${{ matrix.triple }} gcc-stage2
         
       - name: Upload build logs
         if: always()
@@ -90,6 +154,39 @@ jobs:
           path: dist/bugleos-toolchain-${{ env.VERSION }}-${{ matrix.label }}.tar.gz
           if-no-files-found: error
 
+  hash-artifacts:
+    name: Prepare SLSA subjects
+    runs-on: ubuntu-latest
+    needs: build
+    outputs:
+      base64_subjects: ${{ steps.hashes.outputs.base64_subjects }}
+    steps:
+      - name: Download toolchain tarballs
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Compute base64 subjects
+        id: hashes
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -d '' files < <(find dist -name 'bugleos-toolchain-*.tar.gz' -print0 | sort -z)
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No toolchain tarballs found under dist/." >&2
+            exit 1
+          fi
+
+          tmp="$(mktemp)"
+          for f in "${files[@]}"; do
+            hash="$(sha256sum "$f" | awk '{print $1}')"
+            name="$(basename "$f")"
+            printf '%s  %s\n' "$hash" "$name" >> "$tmp"
+          done
+
+          sort "$tmp" | base64 -w0 > "$tmp.b64"
+          echo "base64_subjects=$(cat "$tmp.b64")" >> "$GITHUB_OUTPUT"
+
   publish:
     name: Publish Release
     runs-on: ubuntu-latest
@@ -118,21 +215,39 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y minisign gnupg
 
+      - name: Install SBOM tool (syft)
+        run: |
+          set -euo pipefail
+          curl -sSfL https://get.anchore.io/syft | sh -s -- -b /usr/local/bin
+          syft version
+
+      - name: Generate SBOMs (SPDX + CycloneDX)
+        run: |
+          set -euo pipefail
+          mapfile -d '' files < <(find dist -name 'bugleos-toolchain-*.tar.gz' -print0 | sort -z)
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No toolchain tarballs found under dist/." >&2
+            exit 1
+          fi
+
+          for f in "${files[@]}"; do
+            base="$(basename "$f" .tar.gz)"
+            workdir="$(mktemp -d)"
+            tar -C "$workdir" -xzf "$f"
+            syft "dir:$workdir" -o spdx-json > "dist/${base}.spdx.json"
+            syft "dir:$workdir" -o cyclonedx-json > "dist/${base}.cdx.json"
+            rm -rf "$workdir"
+          done
+
       - name: Generate SHA256SUMS and signatures
         env:
           MINISIGN_KEY: ${{ secrets.MINISIGN_KEY }}
           MINISIGN_PUB: ${{ secrets.MINISIGN_PUB }}
-          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: |
           set -euo pipefail
 
           if [ -z "${MINISIGN_KEY:-}" ] || [ -z "${MINISIGN_PUB:-}" ]; then
             echo "Missing minisign secrets (MINISIGN_KEY / MINISIGN_PUB)." >&2
-            exit 1
-          fi
-          if [ -z "${GPG_PRIVATE_KEY:-}" ]; then
-            echo "Missing GPG_PRIVATE_KEY secret." >&2
             exit 1
           fi
 
@@ -142,40 +257,22 @@ jobs:
           chmod 600 out/minisign.key
           cp out/minisign.pub dist/minisign.pub
 
-          export GNUPGHOME
-          GNUPGHOME="$(mktemp -d)"
-          trap 'rm -rf "$GNUPGHOME"' EXIT
-          printf '%s' "$GPG_PRIVATE_KEY" | gpg --batch --import
-          key_id="$(gpg --list-secret-keys --with-colons | awk -F: '$1=="sec" {print $5; exit}')"
-          if [ -z "$key_id" ]; then
-            echo "No GPG secret key imported." >&2
-            exit 1
-          fi
-
           mapfile -d '' files < <(find dist -name 'bugleos-toolchain-*.tar.gz' -print0 | sort -z)
           if [ "${#files[@]}" -eq 0 ]; then
             echo "No toolchain tarballs found under dist/." >&2
             exit 1
           fi
 
-          sha256sum "${files[@]}" > dist/SHA256SUMS
-
-          minisign -S -s out/minisign.key -p out/minisign.pub -m dist/SHA256SUMS
-          if [ -n "${GPG_PASSPHRASE:-}" ]; then
-            gpg --batch --yes --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" \
-              --local-user "$key_id" --armor --detach-sign -o dist/SHA256SUMS.asc dist/SHA256SUMS
-          else
-            gpg --batch --yes --local-user "$key_id" --armor --detach-sign -o dist/SHA256SUMS.asc dist/SHA256SUMS
+          mapfile -d '' sboms < <(find dist -maxdepth 1 \( -name 'bugleos-toolchain-*.spdx.json' -o -name 'bugleos-toolchain-*.cdx.json' \) -print0 | sort -z)
+          if [ "${#sboms[@]}" -eq 0 ]; then
+            echo "No SBOM files found under dist/." >&2
+            exit 1
           fi
 
+          sha256sum "${files[@]}" "${sboms[@]}" > dist/SHA256SUMS
+          minisign -S -s out/minisign.key -m dist/SHA256SUMS
           for f in "${files[@]}"; do
-            minisign -S -s out/minisign.key -p out/minisign.pub -m "$f"
-            if [ -n "${GPG_PASSPHRASE:-}" ]; then
-              gpg --batch --yes --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" \
-                --local-user "$key_id" --armor --detach-sign -o "$f.asc" "$f"
-            else
-              gpg --batch --yes --local-user "$key_id" --armor --detach-sign -o "$f.asc" "$f"
-            fi
+            minisign -S -s out/minisign.key -m "$f"
           done
 
       - name: Publish GitHub Release
@@ -186,19 +283,44 @@ jobs:
           draft: false
           prerelease: ${{ env.PRERELEASE }}
           body: |
-            Supported architectures:
-            Architecture | Download Link
-            ------------ | -------------
-            x86_64      | [bugleos-toolchain-${{ env.VERSION }}-x86_64.tar.gz](dist/**/bugleos-toolchain-${{ env.VERSION }}-x86_64.tar.gz)
-            aarch64     | [bugleos-toolchain-${{ env.VERSION }}-aarch64.tar.gz](dist/**/bugleos-toolchain-${{ env.VERSION }}-aarch64.tar.gz)
+              # Supported architectures
+
+              ## ![64-bit architecture (x86_64)](https://img.shields.io/badge/arch-x86__64-blue)
+              - Toolchain: https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/bugleos-toolchain-${{ env.VERSION }}-x86_64.tar.gz
+              - Signature (minisign): https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/bugleos-toolchain-${{ env.VERSION }}-x86_64.tar.gz.minisig
+
+              ## ![ARM64 architecture (aarch64)](https://img.shields.io/badge/arch-aarch64-green)
+              - Toolchain: https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/bugleos-toolchain-${{ env.VERSION }}-aarch64.tar.gz
+              - Signature (minisign): https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/bugleos-toolchain-${{ env.VERSION }}-aarch64.tar.gz.minisig
+
+              ## Verification
+              - Public key: https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/minisign.pub
+              - Checksums: https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/SHA256SUMS
+              - Checksums signature: https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/SHA256SUMS.minisig
+            
           files: |
             dist/**/bugleos-toolchain-${{ env.VERSION }}-x86_64.tar.gz
+            dist/**/bugleos-toolchain-${{ env.VERSION }}-aarch64.tar.gz.minisig
             dist/**/bugleos-toolchain-${{ env.VERSION }}-aarch64.tar.gz
             dist/**/bugleos-toolchain-${{ env.VERSION }}-x86_64.tar.gz.minisig
-            dist/**/bugleos-toolchain-${{ env.VERSION }}-aarch64.tar.gz.minisig
-            dist/**/bugleos-toolchain-${{ env.VERSION }}-x86_64.tar.gz.asc
-            dist/**/bugleos-toolchain-${{ env.VERSION }}-aarch64.tar.gz.asc
+            dist/bugleos-toolchain-${{ env.VERSION }}-x86_64.spdx.json
+            dist/bugleos-toolchain-${{ env.VERSION }}-aarch64.spdx.json
+            dist/bugleos-toolchain-${{ env.VERSION }}-x86_64.cdx.json
+            dist/bugleos-toolchain-${{ env.VERSION }}-aarch64.cdx.json
             dist/SHA256SUMS
             dist/SHA256SUMS.minisig
-            dist/SHA256SUMS.asc
             dist/minisign.pub
+
+  provenance:
+    name: Generate SLSA provenance
+    needs: [hash-artifacts, publish]
+    permissions:
+      actions: read
+      id-token: write
+      contents: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
+    with:
+      base64-subjects: "${{ needs.hash-artifacts.outputs.base64_subjects }}"
+      upload-assets: true
+      upload-tag-name: ${{ github.ref_name }}
+      provenance-name: bugleos-toolchain-${{ github.ref_name }}.intoto.jsonl
