@@ -271,6 +271,9 @@ jobs:
 
           sha256sum "${files[@]}" "${sboms[@]}" > dist/SHA256SUMS
           minisign -S -s out/minisign.key -m dist/SHA256SUMS
+          for f in "${files[@]}"; do
+            minisign -S -s out/minisign.key -m "$f"
+          done
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
@@ -280,30 +283,32 @@ jobs:
           draft: false
           prerelease: ${{ env.PRERELEASE }}
           body: |
-            # Supported architectures:
-            
-            ## 64-bit architecture (x86_64)
-            [Download bugleos-toolchain-${{ env.VERSION }}-x86_64 toolchain](dist/**/bugleos-toolchain-${{ env.VERSION }}-x86_64.tar.gz)
-            [Download bugleos-toolchain-${{ env.VERSION }}-x86_64 minisign](dist/**/bugleos-toolchain-${{ env.VERSION }}-x86_64.tar.gz.minisig)
+              # Supported architectures
 
-            ## ARM 64-bit architecture (aarch64)
-            [Download bugleos-toolchain-${{ env.VERSION }}-aarch64 toolchain](dist/**/bugleos-toolchain-${{ env.VERSION }}-aarch64.tar.gz)
-            [Download bugleos-toolchain-${{ env.VERSION }}-aarch64 minisign](dist/**/bugleos-toolchain-${{ env.VERSION }}-aarch64.tar.gz.minisig)
+              ## ![64-bit architecture (x86_64)](https://img.shields.io/badge/arch-x86__64-blue)
+              - Toolchain: https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/bugleos-toolchain-${{ env.VERSION }}-x86_64.tar.gz
+              - Signature (minisign): https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/bugleos-toolchain-${{ env.VERSION }}-x86_64.tar.gz.minisig
+
+              ## ![ARM64 architecture (aarch64)](https://img.shields.io/badge/arch-aarch64-green)
+              - Toolchain: https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/bugleos-toolchain-${{ env.VERSION }}-aarch64.tar.gz
+              - Signature (minisign): https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/bugleos-toolchain-${{ env.VERSION }}-aarch64.tar.gz.minisig
+
+              ## Verification
+              - Public key: https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/minisign.pub
+              - Checksums: https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/SHA256SUMS
+              - Checksums signature: https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/SHA256SUMS.minisig
             
           files: |
             dist/**/bugleos-toolchain-${{ env.VERSION }}-x86_64.tar.gz
-            dist/**/bugleos-toolchain-${{ env.VERSION }}-x86_64.tar.gz.minisig
-            dist/**/bugleos-toolchain-${{ env.VERSION }}-aarch64.tar.gz
             dist/**/bugleos-toolchain-${{ env.VERSION }}-aarch64.tar.gz.minisig
-            dist/**/bugleos-toolchain-${{ env.VERSION }}-x86_64.tar.gz.asc
-            dist/**/bugleos-toolchain-${{ env.VERSION }}-aarch64.tar.gz.asc
+            dist/**/bugleos-toolchain-${{ env.VERSION }}-aarch64.tar.gz
+            dist/**/bugleos-toolchain-${{ env.VERSION }}-x86_64.tar.gz.minisig
             dist/bugleos-toolchain-${{ env.VERSION }}-x86_64.spdx.json
             dist/bugleos-toolchain-${{ env.VERSION }}-aarch64.spdx.json
             dist/bugleos-toolchain-${{ env.VERSION }}-x86_64.cdx.json
             dist/bugleos-toolchain-${{ env.VERSION }}-aarch64.cdx.json
             dist/SHA256SUMS
             dist/SHA256SUMS.minisig
-            dist/SHA256SUMS.asc
             dist/minisign.pub
 
   provenance:
@@ -313,7 +318,7 @@ jobs:
       actions: read
       id-token: write
       contents: write
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.10.0
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.2.0
     with:
       base64-subjects: "${{ needs.hash-artifacts.outputs.base64_subjects }}"
       upload-assets: true
