@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2025 Sebastiano Trombetta
+# Copyright (c) Sebastiano Trombetta. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -7,10 +7,10 @@
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -19,21 +19,29 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+GCC_VERSION := 15.2.0
+GCC_URL := https://ftp.gnu.org/gnu/gcc/gcc-$(GCC_VERSION)/gcc-$(GCC_VERSION).tar.xz
+GCC_SIG_URL := https://ftp.gnu.org/gnu/gcc/gcc-$(GCC_VERSION)/gcc-$(GCC_VERSION).tar.xz.sig
+GCC_SHA256 := 438fd996826b0c82485a29da03a72d71d6e3541a83ec702df4271f6fe025d24e
+
+GNU_KEYRING_URL := https://ftp.gnu.org/gnu/gnu-keyring.gpg
+GNU_KEYRING_FPRS := 1397 5A70 E63C 361C 73AE  69EF 6EEB 81F8 981C 74C7
+
 THIS_MAKEFILE := $(lastword $(MAKEFILE_LIST))
-include $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/common.mk)
+include $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/helpers.mk)
 
 .PHONY: all
 all: gcc-stage1
 
 .PHONY: gcc-stage1
-gcc-stage1: ensure-dirs $(GCC_BUILD_DIR)/.built-stage1
+gcc-stage1: $(PROGRESS_DIR)/.gcc-stage1-done
 
-$(GCC_BUILD_DIR)/.built-stage1: $(GCC_STAMP)
+$(PROGRESS_DIR)/.gcc-stage1-done: $(PROGRESS_DIR)/.gcc-stage1-built
+	$(Q)touch $@
+
+$(PROGRESS_DIR)/.gcc-stage1-built: $(PROGRESS_DIR)/.gcc-stage1-unpacked
 	$(Q)rm -rf $(GCC_BUILD_DIR)
 	$(Q)mkdir -p $(GCC_BUILD_DIR)
-
-	$(call do_step,EXTRACT,gcc-stage1, $(MAKE) -f $(THIS_MAKEFILE) unpack-gcc, \
-		gcc-stage1-extract)
 
 	$(call do_step,EXTRACT,gcc-stage1-prerequisites, \
 		$(call with_host_env,cd "$(GCC_SRC_DIR)" && ./contrib/download_prerequisites), \
@@ -101,4 +109,20 @@ $(GCC_BUILD_DIR)/.built-stage1: $(GCC_STAMP)
 			"$(STAGE1_TOOLCHAIN_ROOT)/bin/$(TARGET)-ld" -v >/dev/null 2>&1', \
 		gcc-stage1-check)
 
+	$(Q)touch $@
+
+$(PROGRESS_DIR)/.gcc-stage1-unpacked: $(PROGRESS_DIR)/.gcc-stage1-verified
+	$(call do_unpack,gcc, \
+		$(call with_host_env, \
+			rm -rf "$(GCC_SRC_DIR)"; \
+			"$(TAR)" -xf "$(GCC_ARCHIVE)" -C "$(SOURCES_DIR)"), \
+		gcc-stage1-unpack)
+	$(Q)touch $@
+
+$(PROGRESS_DIR)/.gcc-stage1-verified: $(PROGRESS_DIR)/.gcc-stage1-downloaded
+	$(call do_verify,gcc,$(ROOT_DIR)/scripts/verify-checksums.sh gcc,gcc-stage1-verify)
+	$(Q)touch $@
+
+$(PROGRESS_DIR)/.gcc-stage1-downloaded: | ensure-dirs
+	$(call do_download,gcc,$(ROOT_DIR)/scripts/fetch-sources.sh gcc,gcc-stage1-download)
 	$(Q)touch $@

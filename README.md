@@ -7,7 +7,7 @@ BugleOS Cross Toolchain builds deterministic cross-compilers and system headers 
 ## Repository layout
 
 - `Makefile`: entry point orchestrating staged builds per architecture.
-- `config/`: central version and path definitions, plus per-architecture target triples.
+- `config/`: path definitions and per-architecture target triples.
 - `make/`: stage-specific makefiles for binutils, GCC, and musl.
 - `scripts/`: helper utilities for fetching sources, verifying checksums, loading the environment, and emitting metadata files.
 - `patches/`: placeholder for local patches to upstream sources.
@@ -41,7 +41,7 @@ To list optional variables for a specific target, pass the target name via `TARG
 make help TARGET=toolchain
 ```
 
-To install Linux UAPI headers into the sysroot, set `WITH_LINUX_HEADERS=1` and update `LINUX_VERSION`/`LINUX_SHA256` in `config/versions.mk`:
+To install Linux UAPI headers into the sysroot, set `WITH_LINUX_HEADERS=1` and update `LINUX_VERSION`/`LINUX_SHA256` in `make/linux-headers.mk`:
 
 ```
 make WITH_LINUX_HEADERS=1 TARGET=x86_64-bugleos-linux-musl toolchain

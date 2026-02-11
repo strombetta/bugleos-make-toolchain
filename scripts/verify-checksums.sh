@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Copyright (c) 2025 Sebastiano Trombetta
+#
+# Copyright (c) Sebastiano Trombetta. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,30 +26,38 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 DOWNLOADS_DIR="${DOWNLOADS_DIR:-$ROOT_DIR/downloads}"
 
 value_of() {
-  local var="$1"
-  awk -F':=' -v name="$var" '$1 ~ "^"name"" {gsub(/[ \t]/,"",$2); print $2}' "$ROOT_DIR/config/versions.mk"
+  local mk_file="$1"
+  local var="$2"
+  awk -F':=' -v name="$var" '$1 ~ "^"name"" {gsub(/[ \t]/,"",$2); print $2; exit}' "$mk_file"
 }
 
-BINUTILS_VERSION=$(value_of BINUTILS_VERSION)
-GCC_VERSION=$(value_of GCC_VERSION)
-MUSL_VERSION=$(value_of MUSL_VERSION)
-LINUX_VERSION=$(value_of LINUX_VERSION)
+BINUTILS_MK="$ROOT_DIR/make/binutils-stage1.mk"
+LINUX_MK="$ROOT_DIR/make/linux-headers.mk"
+GCC_MK="$ROOT_DIR/make/gcc-stage1.mk"
+MUSL_MK="$ROOT_DIR/make/musl.mk"
 
-BINUTILS_SHA=$(value_of BINUTILS_SHA256)
-GCC_SHA=$(value_of GCC_SHA256)
-MUSL_SHA=$(value_of MUSL_SHA256)
-LINUX_SHA=$(value_of LINUX_SHA256)
+BINUTILS_VERSION=$(value_of "$BINUTILS_MK" BINUTILS_VERSION)
+GCC_VERSION=$(value_of "$GCC_MK" GCC_VERSION)
+MUSL_VERSION=$(value_of "$MUSL_MK" MUSL_VERSION)
+LINUX_VERSION=$(value_of "$LINUX_MK" LINUX_VERSION)
 
-LINUX_KEYRING_FPRS=$(value_of LINUX_KEYRING_FPRS)
-GNU_KEYRING_FPRS=$(value_of GNU_KEYRING_FPRS)
-MUSL_PUBKEY_FPR=$(value_of MUSL_PUBKEY_FPR)
+BINUTILS_SHA=$(value_of "$BINUTILS_MK" BINUTILS_SHA256)
+GCC_SHA=$(value_of "$GCC_MK" GCC_SHA256)
+MUSL_SHA=$(value_of "$MUSL_MK" MUSL_SHA256)
+LINUX_SHA=$(value_of "$LINUX_MK" LINUX_SHA256)
+
+LINUX_KEYRING_FPRS=$(value_of "$LINUX_MK" LINUX_KEYRING_FPRS)
+GNU_KEYRING_FPRS_BINUTILS=$(value_of "$BINUTILS_MK" GNU_KEYRING_FPRS)
+GNU_KEYRING_FPRS_GCC=$(value_of "$GCC_MK" GNU_KEYRING_FPRS)
+MUSL_PUBKEY_FPR=$(value_of "$MUSL_MK" MUSL_PUBKEY_FPR)
 
 ensure_checksum_set() {
   local name="$1"
   local value="$2"
+  local file="$3"
 
   if [[ $value =~ ^SHA256_PLACEHOLDER ]]; then
-    echo "Checksum for $name is missing. Please update config/versions.mk with the real SHA256 before verifying." >&2
+    echo "Checksum for $name is missing. Please update $file with the real SHA256 before verifying." >&2
     exit 1
   fi
 }
@@ -56,9 +65,10 @@ ensure_checksum_set() {
 ensure_fpr_set() {
   local name="$1"
   local value="$2"
+  local file="$3"
 
   if [[ -z "$value" || $value =~ FPR_PLACEHOLDER ]]; then
-    echo "Fingerprint for $name is missing. Please update config/versions.mk before verifying." >&2
+    echo "Fingerprint for $name is missing. Please update $file before verifying." >&2
     exit 1
   fi
 }
@@ -170,14 +180,16 @@ trap cleanup EXIT
 gpg_common_args=(--homedir "$GNUPGHOME_TMP" --batch --no-tty)
 
 import_gnu_keyring() {
+  local expected_fprs="$1"
+  local source_file="$2"
   ensure_file_present "$GNU_KEYRING" "GNU project keyring"
-  ensure_fpr_set "GNU_KEYRING_FPRS" "$GNU_KEYRING_FPRS"
-  verify_key_fprs "$GNU_KEYRING" "$GNU_KEYRING_FPRS" "GNU keyring"
+  ensure_fpr_set "GNU_KEYRING_FPRS" "$expected_fprs" "$source_file"
+  verify_key_fprs "$GNU_KEYRING" "$expected_fprs" "GNU keyring"
   gpg "${gpg_common_args[@]}" --import "$GNU_KEYRING" >/dev/null
 }
 
 import_linux_keys() {
-  ensure_fpr_set "LINUX_KEYRING_FPRS" "$LINUX_KEYRING_FPRS"
+  ensure_fpr_set "LINUX_KEYRING_FPRS" "$LINUX_KEYRING_FPRS" "$LINUX_MK"
   if [[ -f "$LINUX_KEYRING" ]]; then
     verify_key_fprs "$LINUX_KEYRING" "$LINUX_KEYRING_FPRS" "Linux kernel signing keyring"
     gpg "${gpg_common_args[@]}" --import "$LINUX_KEYRING" >/dev/null
@@ -208,7 +220,7 @@ import_linux_keys() {
 
 import_musl_pubkey() {
   ensure_file_present "$MUSL_PUBKEY" "musl public key"
-  ensure_fpr_set "MUSL_PUBKEY_FPR" "$MUSL_PUBKEY_FPR"
+  ensure_fpr_set "MUSL_PUBKEY_FPR" "$MUSL_PUBKEY_FPR" "$MUSL_MK"
   verify_key_fprs "$MUSL_PUBKEY" "$MUSL_PUBKEY_FPR" "musl public key"
   gpg "${gpg_common_args[@]}" --import "$MUSL_PUBKEY" >/dev/null
 }
@@ -230,10 +242,10 @@ verify_checksum() {
 }
 
 verify_binutils() {
-  ensure_checksum_set "binutils" "$BINUTILS_SHA"
+  ensure_checksum_set "binutils" "$BINUTILS_SHA" "$BINUTILS_MK"
   ensure_file_present "$DOWNLOADS_DIR/$SIG_BINUTILS" "binutils signature file"
   ensure_file_present "$DOWNLOADS_DIR/binutils-${BINUTILS_VERSION}.tar.xz" "binutils source archive"
-  import_gnu_keyring
+  import_gnu_keyring "$GNU_KEYRING_FPRS_BINUTILS" "$BINUTILS_MK"
   echo "Verifying binutils signature..."
   verify_signature "$SIG_BINUTILS" "binutils-${BINUTILS_VERSION}.tar.xz"
   echo "Verifying binutils checksum..."
@@ -241,7 +253,7 @@ verify_binutils() {
 }
 
 verify_linux() {
-  ensure_checksum_set "linux" "$LINUX_SHA"
+  ensure_checksum_set "linux" "$LINUX_SHA" "$LINUX_MK"
   ensure_file_present "$DOWNLOADS_DIR/$SIG_LINUX" "Linux source signature file"
   ensure_file_present "$DOWNLOADS_DIR/linux-${LINUX_VERSION}.tar.xz" "Linux source archive"
 
@@ -258,10 +270,10 @@ verify_linux() {
 }
 
 verify_gcc() {
-  ensure_checksum_set "GCC" "$GCC_SHA"
+  ensure_checksum_set "GCC" "$GCC_SHA" "$GCC_MK"
   ensure_file_present "$DOWNLOADS_DIR/$SIG_GCC" "GCC signature file"
   ensure_file_present "$DOWNLOADS_DIR/gcc-${GCC_VERSION}.tar.xz" "GCC source archive"
-  import_gnu_keyring
+  import_gnu_keyring "$GNU_KEYRING_FPRS_GCC" "$GCC_MK"
   echo "Verifying GCC signature..."
   verify_signature "$SIG_GCC" "gcc-${GCC_VERSION}.tar.xz"
   echo "Verifying GCC checksum..."
@@ -269,7 +281,7 @@ verify_gcc() {
 }
 
 verify_musl() {
-  ensure_checksum_set "musl" "$MUSL_SHA"
+  ensure_checksum_set "musl" "$MUSL_SHA" "$MUSL_MK"
   ensure_file_present "$DOWNLOADS_DIR/$SIG_MUSL" "musl signature file"
   ensure_file_present "$DOWNLOADS_DIR/musl-${MUSL_VERSION}.tar.gz" "musl source archive"
   import_musl_pubkey

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2025 Sebastiano Trombetta
+# Copyright (c) Sebastiano Trombetta. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -7,10 +7,10 @@
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -19,22 +19,28 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+MUSL_VERSION := 1.2.4
+MUSL_URL := https://musl.libc.org/releases/musl-$(MUSL_VERSION).tar.gz
+MUSL_SIG_URL := https://musl.libc.org/releases/musl-$(MUSL_VERSION).tar.gz.asc
+MUSL_SHA256 := 7a35eae33d5372a7c0da1188de798726f68825513b7ae3ebe97aaaa52114f039
+MUSL_PUBKEY_URL := https://musl.libc.org/musl.pub
+MUSL_PUBKEY_FPR := 8364 8929 0BB6 B70F 99FF  DA05 56BC DB59 3020 450F
+
 THIS_MAKEFILE := $(lastword $(MAKEFILE_LIST))
-include $(abspath $(dir $(THIS_MAKEFILE))/common.mk)
+include $(abspath $(dir $(THIS_MAKEFILE))/helpers.mk)
 
 .PHONY: all
 all: musl
 
 .PHONY: musl
-musl: ensure-dirs $(MUSL_BUILD_DIR)/.built-musl
+musl: $(PROGRESS_DIR)/.musl-done
 
-$(MUSL_BUILD_DIR)/.built-musl: $(MUSL_STAMP)
+$(PROGRESS_DIR)/.musl-done: $(PROGRESS_DIR)/.musl-built
+	$(Q)touch $@
+
+$(PROGRESS_DIR)/.musl-built: $(PROGRESS_DIR)/.musl-unpacked
 	$(Q)rm -rf "$(MUSL_BUILD_DIR)"
 	$(Q)mkdir -p "$(MUSL_BUILD_DIR)"
-
-	$(call do_step,EXTRACT,musl, \
-		$(MAKE) -f "$(THIS_MAKEFILE)" unpack-musl, \
-		musl-extract)
 
 	$(call do_step,CONFIG,musl, \
 		$(call with_cross_env,cd "$(MUSL_BUILD_DIR)" && \
@@ -90,4 +96,20 @@ $(MUSL_BUILD_DIR)/.built-musl: $(MUSL_STAMP)
 			fi), \
 		musl-check)
 
+	$(Q)touch $@
+
+$(PROGRESS_DIR)/.musl-unpacked: $(PROGRESS_DIR)/.musl-verified
+	$(call do_unpack,musl, \
+		$(call with_host_env, \
+			rm -rf "$(MUSL_SRC_DIR)"; \
+			"$(TAR)" -xf "$(MUSL_ARCHIVE)" -C "$(SOURCES_DIR)"), \
+		musl-unpack)
+	$(Q)touch $@
+
+$(PROGRESS_DIR)/.musl-verified: $(PROGRESS_DIR)/.musl-downloaded
+	$(call do_verify,musl,$(ROOT_DIR)/scripts/verify-checksums.sh musl,musl-verify)
+	$(Q)touch $@
+
+$(PROGRESS_DIR)/.musl-downloaded: | ensure-dirs
+	$(call do_download,musl,$(ROOT_DIR)/scripts/fetch-sources.sh musl,musl-download)
 	$(Q)touch $@

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2025 Sebastiano Trombetta
+# Copyright (c) Sebastiano Trombetta. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -7,10 +7,10 @@
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -45,9 +45,6 @@ else
 LINUX_ARCH := $(TARGET_ARCH)
 endif
 MUSL_LDSO   := ld-musl-$(TARGET_ARCH).so.1
-
-HOST_PATH := /usr/bin:/bin:$(PATH)
-CROSS_PATH := $(TOOLCHAIN_ROOT)/bin:$(TOOLCHAIN_TARGET_DIR)/bin:$(STAGE1_TOOLCHAIN_ROOT)/bin:$(STAGE1_TOOLCHAIN_ROOT)/$(TARGET)/bin
 
 TOOLCHAIN_ROOT ?= $(OUT_DIR)/toolchain
 TOOLCHAIN_TARGET_DIR ?= $(TOOLCHAIN_ROOT)/$(TARGET)

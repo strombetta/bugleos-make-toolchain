@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2025 Sebastiano Trombetta
+# Copyright (c) Sebastiano Trombetta. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,7 @@
 # SOFTWARE.
 
 include config/paths.mk
-include make/common.mk
+include make/helpers.mk
 
 ROOT_DIR := $(abspath $(ROOT_DIR))
 
